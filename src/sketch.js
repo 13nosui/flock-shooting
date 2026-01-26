@@ -506,6 +506,15 @@ function keyPressed() {
         mousePressed();
     } else if (gameState === "GAMEOVER") {
         resetGame();
+    } else if (gameState === "PLAY") {
+        // --- DEBUG: Press 'B' to spawn Boss ---
+        if (key === 'b' || key === 'B') {
+            if (!boss) {
+                console.log("Debug: Spawning Boss...");
+                boss = new Boss();
+                isBossActive = true;
+            }
+        }
     }
 }
 
