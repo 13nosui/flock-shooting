@@ -150,7 +150,7 @@ function draw() {
                 // Enemy takes damage
                 let isDestroyed = o.takeDamage(1);
                 totalDamageDealt++;
-                spawnDamageText(o.pos.x, o.pos.y, o.pos.z, 1);
+                spawnDamageText(o.pos.x, o.pos.y - o.size / 2 - 50, o.pos.z, 1);
 
                 if (isDestroyed) {
                     // Death Logic
