@@ -15,10 +15,12 @@ let bullets = [];
 let curCamX = 0;
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
-let osc, noiseOsc, env, shotEnv;
+let osc, noiseOsc, env, shotEnv, itemEnv;
 let wheelForceY = 0;
 let leaderHistory = [];
 const MAX_HISTORY = 100;
+let items = [];
+let gameState = "START";
 
 function preload() {
     myFont = loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf');
@@ -37,6 +39,9 @@ function setup() {
 
     shotEnv = new p5.Envelope();
     shotEnv.setADSR(0.001, 0.05, 0, 0);
+
+    itemEnv = new p5.Envelope();
+    itemEnv.setADSR(0.001, 0.2, 0, 0);
 
     noiseOsc.amp(0);
     noiseOsc.start();
@@ -61,8 +66,13 @@ function updateBounds() {
 function draw() {
     background(isInverted ? 255 : 0);
 
-    if (!started) {
+    if (gameState === "START") {
         drawStartScreen();
+        return;
+    }
+
+    if (gameState === "GAMEOVER") {
+        drawGameOverScreen();
         return;
     }
 
@@ -102,6 +112,8 @@ function draw() {
             let o = obstacles[j];
             let d = dist(b.pos.x, b.pos.y, b.pos.z, o.pos.x, o.pos.y, o.pos.z);
             if (d < o.size / 2 + 20) {
+                // Spawn Item
+                items.push(new Item(o.pos.x, o.pos.y, o.pos.z));
                 o.active = false;
                 b.active = false;
                 triggerHitEffect();
@@ -112,10 +124,35 @@ function draw() {
         if (!bullets[i].active) bullets.splice(i, 1);
     }
 
+    for (let i = items.length - 1; i >= 0; i--) {
+        items[i].update(leader.pos);
+        items[i].display();
+
+        // Collector with leader
+        let d = dist(items[i].pos.x, items[i].pos.y, items[i].pos.z, leader.pos.x, leader.pos.y, leader.pos.z);
+        if (d < 50) {
+            itemEnv.play(osc);
+            osc.freq(880);
+            growFlock(2);
+            items.splice(i, 1);
+        } else if (!items[i].active) {
+            items.splice(i, 1);
+        }
+    }
+
     if (frameCount % 60 === 0) obstacles.push(new VoxelObstacle());
     for (let i = obstacles.length - 1; i >= 0; i--) {
         obstacles[i].update();
         obstacles[i].display();
+
+        // Leader hit obstacle
+        let d = dist(obstacles[i].pos.x, obstacles[i].pos.y, obstacles[i].pos.z, leader.pos.x, leader.pos.y, leader.pos.z);
+        if (obstacles[i].active && !obstacles[i].isHit && d < obstacles[i].size / 2 + 30) {
+            obstacles[i].isHit = true;
+            damageFlock(5);
+            obstacles[i].active = false;
+        }
+
         if (!obstacles[i].active) obstacles.splice(i, 1);
     }
 
@@ -284,18 +321,62 @@ function drawStartScreen() {
 }
 
 function mousePressed() {
-    if (!started) {
-        userStartAudio(); started = true;
+    if (gameState === "START") {
+        userStartAudio(); gameState = "PLAY";
+    } else if (gameState === "GAMEOVER") {
+        resetGame();
     } else {
         fire();
     }
 }
 function keyPressed() {
-    if (!started) {
+    if (gameState === "START") {
         mousePressed();
+    } else if (gameState === "GAMEOVER") {
+        resetGame();
     } else if (key === ' ') {
         fire();
     }
+}
+
+function damageFlock(amount) {
+    triggerHitEffect();
+    for (let i = 0; i < amount; i++) {
+        if (particles.length > 1) {
+            particles.pop();
+        } else {
+            gameState = "GAMEOVER";
+            break;
+        }
+    }
+}
+
+function growFlock(amount) {
+    for (let i = 0; i < amount; i++) {
+        let p = new WireCross(false);
+        p.pos = p5.Vector.add(leader.pos, p5.Vector.random3D().mult(50));
+        particles.push(p);
+    }
+    score += amount;
+}
+
+function resetGame() {
+    particles = [];
+    items = [];
+    obstacles = [];
+    score = 0;
+    leaderHistory = [];
+    setup();
+    gameState = "PLAY";
+}
+
+function drawGameOverScreen() {
+    push(); resetMatrix(); camera(0, 0, 500, 0, 0, 0, 0, 1, 0); ortho(-width / 2, width / 2, -height / 2, height / 2, 0, 1000);
+    background(0); textFont(myFont); textAlign(CENTER, CENTER); fill(255);
+    textSize(40); text("GAME OVER", 0, -20);
+    textSize(18); text("FINAL SYNC: " + floor(score) + "%", 0, 20);
+    textSize(14); text("CLICK TO REBOOT", 0, 60);
+    pop();
 }
 
 function getFlockDensity() {
