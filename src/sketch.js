@@ -128,11 +128,16 @@ function draw() {
             let o = obstacles[j];
             let d = dist(b.pos.x, b.pos.y, b.pos.z, o.pos.x, o.pos.y, o.pos.z);
             if (d < o.size / 2 + 20) {
-                // Spawn Item
-                items.push(new Item(o.pos.x, o.pos.y, o.pos.z));
-                o.active = false;
                 b.active = false;
-                triggerHitEffect();
+
+                // Enemy takes damage
+                let isDestroyed = o.takeDamage(1);
+
+                if (isDestroyed) {
+                    // Death Logic
+                    items.push(new Item(o.pos.x, o.pos.y, o.pos.z));
+                    triggerHitEffect();
+                }
                 break;
             }
         }
