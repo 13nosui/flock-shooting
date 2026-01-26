@@ -472,9 +472,9 @@ function windowResized() {
 }
 
 function spawnExplosion(x, y, z) {
-    let count = floor(random(15, 30)); // Number of particles
-    let c = color(255, 50, 50); // Explosion color
+    // Spawn 30-50 particles for a big blast
+    let count = floor(random(30, 50));
     for (let i = 0; i < count; i++) {
-        allDebris.push(new Debris(x, y, z, c));
+        allDebris.push(new Debris(x, y, z));
     }
 }
