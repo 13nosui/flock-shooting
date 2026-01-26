@@ -23,6 +23,7 @@ let items = [];
 let gameState = "START";
 let lastShotTime = 0;
 const SHOT_COOLDOWN = 150; // Milliseconds between shots
+let allDebris = [];
 
 function preload() {
     myFont = loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf');
@@ -136,6 +137,7 @@ function draw() {
                 if (isDestroyed) {
                     // Death Logic
                     items.push(new Item(o.pos.x, o.pos.y, o.pos.z));
+                    spawnExplosion(o.pos.x, o.pos.y, o.pos.z);
                     triggerHitEffect();
                 }
                 break;
@@ -175,6 +177,12 @@ function draw() {
         }
 
         if (!obstacles[i].active) obstacles.splice(i, 1);
+    }
+
+    for (let i = allDebris.length - 1; i >= 0; i--) {
+        allDebris[i].update();
+        allDebris[i].display();
+        if (allDebris[i].life <= 0) allDebris.splice(i, 1);
     }
 
     leader.updateAsLeader();
@@ -392,6 +400,7 @@ function resetGame() {
     particles = [];
     items = [];
     obstacles = [];
+    allDebris = [];
     score = 0;
     leaderHistory = [];
     setup();
@@ -460,4 +469,12 @@ function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     updateBounds();
     grid = new Grid();
+}
+
+function spawnExplosion(x, y, z) {
+    let count = floor(random(15, 30)); // Number of particles
+    let c = color(255, 50, 50); // Explosion color
+    for (let i = 0; i < count; i++) {
+        allDebris.push(new Debris(x, y, z, c));
+    }
 }
