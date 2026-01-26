@@ -52,39 +52,50 @@ class VoxelObstacle {
         // Shooting Logic
         this.fireTimer--;
         if (this.fireTimer <= 0 && this.active) {
-            // Fire only if enemy is ahead of player (Z-axis check)
+            // Fire only if enemy is well ahead of player
             if (leader && this.pos.z < leader.pos.z - 200) {
 
-                // Base direction towards leader
                 let dir = p5.Vector.sub(leader.pos, this.pos);
+
+                // Determine Bullet Speed based on Enemy Type
+                // MUST be faster than the enemy's own speed (Tank: ~11, Normal: ~22, Interceptor: ~40)
+                let bulletSpeed = 15; // Default (Tank)
+                if (this.type === 'NORMAL') bulletSpeed = 45;
+                if (this.type === 'INTERCEPTOR') bulletSpeed = 70;
+
+                // Spawn position: Start slightly in front of the enemy to avoid clipping
+                let spawnZ = this.pos.z + (this.size / 2) + 10;
 
                 if (this.type === 'TANK') {
                     // --- TANK: 3-Way Radial Shot ---
-                    let angles = [-0.3, 0, 0.3]; // Spread angles
+                    let angles = [-0.3, 0, 0.3];
                     for (let angle of angles) {
                         let spreadDir = dir.copy();
-
                         let angleY = atan2(spreadDir.x, spreadDir.z) + angle;
                         let mag = spreadDir.mag();
-                        // Reconstruct vector from angle
                         let finalDir = createVector(sin(angleY) * mag, spreadDir.y, cos(angleY) * mag);
 
-                        finalDir.setMag(15);
+                        finalDir.setMag(20); // Tank bullets can be a bit slower but visible
                         if (typeof enemyBullets !== 'undefined') {
-                            enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z, finalDir, 'ENEMY'));
+                            enemyBullets.push(new Bullet(this.pos.x, this.pos.y, spawnZ, finalDir, 'ENEMY'));
                         }
                     }
                 } else {
                     // --- NORMAL / INTERCEPTOR: Single Shot ---
-                    dir.setMag(this.type === 'INTERCEPTOR' ? 25 : 15); // Interceptors shoot faster
+                    dir.setMag(bulletSpeed);
                     if (typeof enemyBullets !== 'undefined') {
-                        enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z, dir, 'ENEMY'));
+                        enemyBullets.push(new Bullet(this.pos.x, this.pos.y, spawnZ, dir, 'ENEMY'));
                     }
                 }
 
                 // Reset Timer
                 let rate = (this.difficulty || 1);
-                this.fireTimer = (this.type === 'TANK' ? 180 : 120) / rate; // Tanks shoot slower
+                if (this.type === 'TANK') {
+                    this.fireTimer = 180 / rate;
+                } else {
+                    // Shoot more often for fast enemies
+                    this.fireTimer = random(45, 90) / rate;
+                }
             }
         }
     }
