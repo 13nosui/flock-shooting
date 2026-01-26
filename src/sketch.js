@@ -26,6 +26,9 @@ const SHOT_COOLDOWN = 150; // Milliseconds between shots
 let allDebris = [];
 let weaponMode = 'NORMAL';
 let weaponTimer = 0;
+let enemiesDefeated = 0;
+let totalDamageDealt = 0;
+let totalBulletsFired = 0;
 
 function preload() {
     myFont = loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf');
@@ -133,9 +136,11 @@ function draw() {
             if (d < o.size / 2 + 20) {
                 // Enemy takes damage
                 let isDestroyed = o.takeDamage(1);
+                totalDamageDealt++;
 
                 if (isDestroyed) {
                     // Death Logic
+                    enemiesDefeated++;
                     let dropType = o.getDropItemType();
                     items.push(new Item(o.pos.x, o.pos.y, o.pos.z, dropType));
                     spawnExplosion(o.pos.x, o.pos.y, o.pos.z);
@@ -355,6 +360,14 @@ function drawUI() {
         text("WEAPON: " + weaponMode + " (" + ceil(weaponTimer / 60) + "s)", -width * 0.45, -height * 0.45 + 30);
     }
 
+    // Dashboard Stats (Top Right)
+    textAlign(RIGHT, TOP);
+    fill(col, 150);
+    text("DESTROYED: " + enemiesDefeated, width * 0.45, -height * 0.45);
+    text("DAMAGE: " + totalDamageDealt, width * 0.45, -height * 0.45 + 25);
+    text("BULLETS: " + totalBulletsFired, width * 0.45, -height * 0.45 + 50);
+    text("LIVING: " + particles.length, width * 0.45, -height * 0.45 + 75);
+
     drawingContext.enable(drawingContext.DEPTH_TEST);
     pop();
 }
@@ -430,6 +443,9 @@ function resetGame() {
     leaderHistory = [];
     weaponMode = 'NORMAL';
     weaponTimer = 0;
+    enemiesDefeated = 0;
+    totalDamageDealt = 0;
+    totalBulletsFired = 0;
     setup();
     gameState = "PLAY";
 }
@@ -465,16 +481,19 @@ function fire() {
     if (weaponMode === 'LASER') {
         osc.freq(330);
         bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, createVector(0, 0, -60), 'LASER'));
+        totalBulletsFired++;
     } else if (weaponMode === 'HOMING') {
         osc.freq(660);
         for (let i = -1; i <= 1; i++) {
             let v = createVector(i * 10, random(-5, 5), -30);
             bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, v, 'HOMING'));
+            totalBulletsFired++;
         }
     } else {
         osc.freq(isLaserCrit ? 440 : 880);
         if (isLaserCrit) {
             bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, createVector(0, 0, -50), 'LASER'));
+            totalBulletsFired++;
         } else {
             let spreadCount = 0;
             if (flockSize >= 30) spreadCount = 2;
@@ -483,6 +502,7 @@ function fire() {
             for (let i = -spreadCount; i <= spreadCount; i++) {
                 let v = createVector(i * 3, 0, -40);
                 bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, v, 'NORMAL'));
+                totalBulletsFired++;
             }
         }
     }
