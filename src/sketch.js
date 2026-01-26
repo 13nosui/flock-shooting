@@ -17,6 +17,7 @@ let scenery = [];
 let boss = null;
 let isBossActive = false;
 let curCamX = 0;
+let titleParticles = [];
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
 let osc, noiseOsc, env, shotEnv, itemEnv;
@@ -70,12 +71,33 @@ function setup() {
     }
     grid = new Grid();
     curCamX = 0;
+    if (myFont) initTitleParticles();
 }
 
 function updateBounds() {
     boundsX = width / 2;
     boundsY = height / 2;
     boundsZ = 1000;
+}
+
+function initTitleParticles() {
+    titleParticles = [];
+    let txt = "THA_GUNTAI";
+    let fontSize = min(width / 10, 80);
+
+    // Calculate bounding box to center text
+    let bounds = myFont.textBounds(txt, 0, 0, fontSize);
+    let startX = -bounds.w / 2;
+    let startY = bounds.h / 2;
+
+    let points = myFont.textToPoints(txt, startX, startY, fontSize, {
+        sampleFactor: 0.2,
+        simplifyThreshold: 0
+    });
+
+    for (let pt of points) {
+        titleParticles.push(new TitleParticle(pt.x, pt.y));
+    }
 }
 
 function isTouchingUI() {
@@ -487,10 +509,28 @@ function drawFlash() {
 }
 
 function drawStartScreen() {
-    push(); resetMatrix(); camera(0, 0, 500, 0, 0, 0, 0, 1, 0); ortho(-width / 2, width / 2, -height / 2, height / 2, 0, 1000);
-    background(0); textFont(myFont); textAlign(CENTER, CENTER); fill(255);
-    textSize(40); text("THA_GUNTAI", 0, -20);
-    textSize(18); text("CLICK OR PRESS KEY TO BOOT", 0, 50);
+    push();
+    resetMatrix();
+    // 2D Ortho view centered
+    camera(0, 0, 500, 0, 0, 0, 0, 1, 0);
+    ortho(-width / 2, width / 2, -height / 2, height / 2, 0, 1000);
+
+    background(0);
+
+    // Update and display particles
+    for (let p of titleParticles) {
+        p.behaviors();
+        p.update();
+        p.display();
+    }
+
+    // Subtext (Static)
+    textFont(myFont);
+    textAlign(CENTER, CENTER);
+    fill(150);
+    textSize(18);
+    text("CLICK OR PRESS KEY TO BOOT", 0, 100);
+
     pop();
 }
 
