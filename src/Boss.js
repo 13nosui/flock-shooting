@@ -3,8 +3,8 @@ class Boss {
         this.pos = createVector(0, 0, -4000);
         this.targetZ = -1500;
         this.coreSize = 600;
-        this.coreHp = 300;
-        this.maxCoreHp = 300;
+        this.coreHp = 100; // Reduced from 300
+        this.maxCoreHp = 100;
         this.active = true;
         this.fireTimer = 0;
         this.angle = 0;
@@ -14,7 +14,7 @@ class Boss {
         for (let i = 0; i < 4; i++) {
             this.shields.push({
                 active: true,
-                hp: 80,
+                hp: 30, // Reduced from 80
                 offsetAngle: (TWO_PI / 4) * i,
                 size: 250,
                 dist: 700 // Distance from core
