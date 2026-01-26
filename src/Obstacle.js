@@ -5,8 +5,12 @@ class VoxelObstacle {
         this.speed = 22 * difficulty;
         this.active = true;
         this.isHit = false;
-        this.maxHp = 5 + floor((difficulty - 1) * 5);
+
+        // SCALE HP: Tougher as difficulty increases
+        // Base 3, +1 for every 1.0 increase in difficulty
+        this.maxHp = floor(3 + (difficulty - 1) * 5);
         this.hp = this.maxHp;
+
         this.shakeTimer = 0;
     }
     update() {
