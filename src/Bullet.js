@@ -66,15 +66,17 @@ class Bullet {
         push();
         translate(this.pos.x, this.pos.y, this.pos.z);
 
-        // --- FIX: Rotate bullet to face travel direction ---
-        // Calculate rotation angles based on velocity
-        if (this.vel.mag() > 0) {
+        // --- ROTATION FIX ---
+        // Rotate to face the direction of movement
+        if (this.vel.mag() > 0.1) {
+            // Calculate rotation angles
             let angleY = atan2(this.vel.x, this.vel.z);
-            let angleX = -asin(this.vel.y / (this.vel.mag() + 0.001));
+            let angleX = -asin(this.vel.y / this.vel.mag());
+
             rotateY(angleY);
             rotateX(angleX);
         }
-        // --------------------------------------------------
+        // --------------------
 
         stroke(this.col);
 

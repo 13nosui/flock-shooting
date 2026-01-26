@@ -49,17 +49,42 @@ class VoxelObstacle {
         this.pos.z += this.speed;
         if (this.pos.z > 1000) this.active = false;
 
-        // Firing Logic
+        // Shooting Logic
         this.fireTimer--;
         if (this.fireTimer <= 0 && this.active) {
-            // Only fire if somewhat in front of the leader (don't fire from way behind)
-            if (leader && this.pos.z < leader.pos.z + 200) {
+            // Fire only if enemy is ahead of player (Z-axis check)
+            if (leader && this.pos.z < leader.pos.z - 200) {
+
+                // Base direction towards leader
                 let dir = p5.Vector.sub(leader.pos, this.pos);
-                dir.setMag(15); // Bullet speed
-                enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z + 50, dir, 'ENEMY'));
+
+                if (this.type === 'TANK') {
+                    // --- TANK: 3-Way Radial Shot ---
+                    let angles = [-0.3, 0, 0.3]; // Spread angles
+                    for (let angle of angles) {
+                        let spreadDir = dir.copy();
+
+                        let angleY = atan2(spreadDir.x, spreadDir.z) + angle;
+                        let mag = spreadDir.mag();
+                        // Reconstruct vector from angle
+                        let finalDir = createVector(sin(angleY) * mag, spreadDir.y, cos(angleY) * mag);
+
+                        finalDir.setMag(15);
+                        if (typeof enemyBullets !== 'undefined') {
+                            enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z, finalDir, 'ENEMY'));
+                        }
+                    }
+                } else {
+                    // --- NORMAL / INTERCEPTOR: Single Shot ---
+                    dir.setMag(this.type === 'INTERCEPTOR' ? 25 : 15); // Interceptors shoot faster
+                    if (typeof enemyBullets !== 'undefined') {
+                        enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z, dir, 'ENEMY'));
+                    }
+                }
 
                 // Reset Timer
-                this.fireTimer = random(120, 240) / this.difficulty;
+                let rate = (this.difficulty || 1);
+                this.fireTimer = (this.type === 'TANK' ? 180 : 120) / rate; // Tanks shoot slower
             }
         }
     }
