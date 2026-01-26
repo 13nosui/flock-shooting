@@ -64,7 +64,7 @@ class VoxelObstacle {
                 if (this.type === 'INTERCEPTOR') bulletSpeed = 70;
 
                 // Spawn position: Start slightly in front of the enemy to avoid clipping
-                let spawnZ = this.pos.z + (this.size / 2) + 10;
+                let spawnZ = this.pos.z + (this.size / 2) + 20;
 
                 if (this.type === 'TANK') {
                     // --- TANK: 3-Way Radial Shot ---
@@ -75,7 +75,7 @@ class VoxelObstacle {
                         let mag = spreadDir.mag();
                         let finalDir = createVector(sin(angleY) * mag, spreadDir.y, cos(angleY) * mag);
 
-                        finalDir.setMag(20); // Tank bullets can be a bit slower but visible
+                        finalDir.setMag(bulletSpeed);
                         if (typeof enemyBullets !== 'undefined') {
                             enemyBullets.push(new Bullet(this.pos.x, this.pos.y, spawnZ, finalDir, 'ENEMY'));
                         }
@@ -93,8 +93,8 @@ class VoxelObstacle {
                 if (this.type === 'TANK') {
                     this.fireTimer = 180 / rate;
                 } else {
-                    // Shoot more often for fast enemies
-                    this.fireTimer = random(45, 90) / rate;
+                    // Shoot faster for fast enemies
+                    this.fireTimer = random(40, 80) / rate;
                 }
             }
         }
