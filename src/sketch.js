@@ -15,6 +15,7 @@ let bullets = [];
 let enemyBullets = [];
 let scenery = [];
 let boss = null;
+let isBossActive = false;
 let curCamX = 0;
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
@@ -92,7 +93,18 @@ function isTouchingUI() {
 }
 
 function draw() {
-    background(isInverted ? 255 : 0);
+    // 0. Background & Lighting
+    if (isBossActive) {
+        // EMERGENCY MODE: Red Background
+        background(30, 0, 0); // Dark red
+        ambientLight(100, 0, 0);
+    } else if (isInverted) {
+        background(255); // White (Inverted)
+        ambientLight(150);
+    } else {
+        background(0); // Black (Normal)
+        ambientLight(100);
+    }
 
     if (gameState === "START") {
         drawStartScreen();
@@ -141,7 +153,10 @@ function draw() {
     grid.display();
 
     // Boss Loop
-    if (!boss && score > 500) boss = new Boss();
+    if (!boss && score > 500) {
+        boss = new Boss();
+        isBossActive = true; // TRIGGER EMERGENCY MODE
+    }
     if (boss) {
         boss.update();
         boss.display();
@@ -150,6 +165,7 @@ function draw() {
             addScreenShake(50);
             score += 1000;
             boss = null;
+            isBossActive = false; // END EMERGENCY MODE
         }
     }
 
@@ -523,6 +539,7 @@ function resetGame() {
     enemyBullets = [];
     scenery = [];
     boss = null;
+    isBossActive = false;
     score = 0;
     leaderHistory = [];
     weaponMode = 'NORMAL';

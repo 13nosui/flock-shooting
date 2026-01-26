@@ -98,7 +98,15 @@ class WireCross {
         rotateY(frameCount * rotSpeed * 0.5 + this.noiseOffset);
 
         strokeWeight(this.isLeader ? 4 : 2);
-        stroke(this.isLeader ? '#FF0000' : (isInverted ? 0 : 255));
+
+        // COLOR CHANGE LOGIC
+        if (typeof isBossActive !== 'undefined' && isBossActive) {
+            // Boss Mode: Red Grid
+            stroke(255, 50, 50);
+        } else {
+            // Normal Mode: Blue/White Grid
+            stroke(this.isLeader ? '#FF0000' : (isInverted ? 0 : 255));
+        }
         let s = this.size;
         line(-s, 0, 0, s, 0, 0);
         line(0, -s, 0, 0, s, 0);
