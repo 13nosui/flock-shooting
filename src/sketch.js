@@ -124,35 +124,39 @@ function handleInput() {
     let wind = createVector(0, 0, 0);
     let power = 5.0;
 
-    // Keyboard X/Z (Forward/Backward/Left/Right)
-    if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) wind.x = -power;
-    if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) wind.x = power;
-    if (keyIsDown(UP_ARROW) || keyIsDown(87)) wind.z = -power;
-    if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) wind.z = power;
+    // Keyboard Fallback (WASD + QE/ShiftSpace)
+    if (keyIsDown(65) || keyIsDown(LEFT_ARROW)) wind.x = -power; // A
+    if (keyIsDown(68) || keyIsDown(RIGHT_ARROW)) wind.x = power;  // D
+    if (keyIsDown(87) || keyIsDown(UP_ARROW)) wind.z = -power; // W (Forward = -Z)
+    if (keyIsDown(83) || keyIsDown(DOWN_ARROW)) wind.z = power;  // S (Backward = +Z)
+    if (keyIsDown(81) || keyIsDown(SHIFT)) wind.y = -power; // Q (Ascend = -Y)
+    if (keyIsDown(69) || keyIsDown(32)) wind.y = power;  // E (Descend = +Y)
 
-    // Keyboard Y (Altitude)
-    if (keyIsDown(SHIFT) || keyIsDown(81)) wind.y = -power; // UP
-    if (keyIsDown(32) || keyIsDown(69)) wind.y = power;    // DOWN (Space or E)
-
-    // Virtual Joystick / Slider Logic
+    // Dual-Stick Mouse/Touch Logic
     if (mouseIsPressed) {
-        // Left zone: Joystick (Movement on X-Z plane)
+        // Left Stick (Movement on X-Z Plane)
         if (mouseX < width * 0.5) {
-            let joyX = width * 0.2;
-            let joyY = height - 120;
-            let dx = mouseX - joyX;
-            let dy = mouseY - joyY;
-            let d = dist(mouseX, mouseY, joyX, joyY);
-            let angle = atan2(dy, dx);
-            let dist_val = min(d, 60);
-            wind.x = map(dist_val * cos(angle), -60, 60, -power, power);
-            wind.z = map(dist_val * sin(angle), -60, 60, -power, power);
+            let stickCenterX = width * 0.15;
+            let stickCenterY = height - 100;
+            let dx = mouseX - stickCenterX;
+            let dy = mouseY - stickCenterY;
+            let d = dist(mouseX, mouseY, stickCenterX, stickCenterY);
+            let maxR = 60;
+            if (d > 5) {
+                let r = min(d, maxR);
+                let angle = atan2(dy, dx);
+                wind.x = map(r * cos(angle), -maxR, maxR, -power, power);
+                wind.z = map(r * sin(angle), -maxR, maxR, -power, power);
+            }
         }
-        // Right zone: Altitude Control (Movement on Y axis)
-        if (mouseX > width * 0.6) {
-            let sliderY = height - 120;
-            if (mouseY < sliderY - 20) wind.y = -power;
-            else if (mouseY > sliderY + 20) wind.y = power;
+        // Right Slider (Altitude on Y Axis)
+        if (mouseX > width * 0.5) {
+            let sliderCenterX = width * 0.85;
+            let sliderCenterY = height - 100;
+            let dy = mouseY - sliderCenterY;
+            if (abs(dy) > 10) {
+                wind.y = map(constrain(dy, -60, 60), -60, 60, -power, power);
+            }
         }
     }
 
@@ -182,46 +186,51 @@ function drawUI() {
     stroke(col, 150);
     noFill();
 
-    // Bottom-Left: Virtual Joystick (X-Z)
-    let joyX = -width * 0.3;
-    let joyY = height * 0.35;
-    strokeWeight(1);
-    ellipse(joyX, joyY, 120, 120);
-    line(joyX - 10, joyY, joyX + 10, joyY);
-    line(joyX, joyY - 10, joyX, joyY + 10);
+    // Left Stick (X-Z Plane)
+    let stickX = -width * 0.35;
+    let stickY = height * 0.35;
+    ellipse(stickX, stickY, 120, 120);
 
-    // Stick visualization
+    // Stick Handle
+    let handleX = stickX;
+    let handleY = stickY;
     if (mouseIsPressed && mouseX < width * 0.5) {
-        let dx = mouseX - width * 0.2;
-        let dy = mouseY - (height - 120);
+        let dx = mouseX - width * 0.15;
+        let dy = mouseY - (height - 100);
         let d = dist(0, 0, dx, dy);
-        let angle = atan2(dy, dx);
         let r = min(d, 60);
-        ellipse(joyX + cos(angle) * r, joyY + sin(angle) * r, 30, 30);
-    } else {
-        ellipse(joyX, joyY, 30, 30);
+        let angle = atan2(dy, dx);
+        handleX += cos(angle) * r;
+        handleY += sin(angle) * r;
     }
+    ellipse(handleX, handleY, 40, 40);
 
     textAlign(CENTER, CENTER);
-    textSize(10);
-    fill(col, 150); noStroke();
-    text("MOVE", joyX, joyY - 75);
-    text("FWD", joyX, joyY - 45);
-    text("BWD", joyX, joyY + 45);
-    text("L", joyX - 45, joyY);
-    text("R", joyX + 45, joyY);
+    textSize(10); fill(col, 150); noStroke();
+    text("MOVE", stickX, stickY - 80);
+    text("FWD", stickX, stickY - 45);
+    text("BWD", stickX, stickY + 45);
+    text("L", stickX - 45, stickY);
+    text("R", stickX + 45, stickY);
 
-    // Bottom-Right: Altitude Control (Y)
-    let altX = width * 0.3;
-    let altY = height * 0.35;
+    // Right Slider (Y Altitude)
+    let sliderX = width * 0.35;
+    let sliderY = height * 0.35;
     noFill(); stroke(col, 150);
-    rect(altX - 25, altY - 60, 50, 120);
-    line(altX - 25, altY, altX + 25, altY);
+    rect(sliderX - 20, sliderY - 60, 40, 120, 10);
 
-    fill(col, 150); noStroke();
-    text("ALTITUDE", altX, altY - 75);
-    text("UP", altX, altY - 40);
-    text("DOWN", altX, altY + 40);
+    // Slider Handle
+    let shY = sliderY;
+    if (mouseIsPressed && mouseX > width * 0.5) {
+        shY = sliderY + constrain(mouseY - (height - 100), -60, 60);
+    }
+    fill(col, 150);
+    rect(sliderX - 25, shY - 10, 50, 20, 5);
+
+    noStroke();
+    text("ALTITUDE", sliderX, sliderY - 80);
+    text("UP", sliderX, sliderY - 40);
+    text("DOWN", sliderX, sliderY + 40);
 
     // Stats
     textAlign(LEFT); textSize(18);
