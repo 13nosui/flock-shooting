@@ -3,11 +3,18 @@ class Boss {
         this.pos = createVector(0, 0, -4000);
         this.targetZ = -1500;
         this.coreSize = 600;
-        this.coreHp = 100; // Reduced from 300
+
+        // --- BALANCE: Reduced HP for better pacing ---
+        this.coreHp = 100;
         this.maxCoreHp = 100;
+        // ---------------------------------------------
+
         this.active = true;
         this.fireTimer = 0;
         this.angle = 0;
+
+        // --- NEW: Shake Timer ---
+        this.shakeTimer = 0;
 
         // 4 Rotating Shields
         this.shields = [];
@@ -17,21 +24,18 @@ class Boss {
                 hp: 30, // Reduced from 80
                 offsetAngle: (TWO_PI / 4) * i,
                 size: 250,
-                dist: 700 // Distance from core
+                dist: 700
             });
         }
     }
 
     update() {
-        // Approach
         if (this.pos.z < this.targetZ) {
             this.pos.z += 5;
         }
 
-        // Rotation
         this.angle += 0.02;
 
-        // Attack Logic
         this.fireTimer++;
         if (this.fireTimer > 100) {
             this.fireRadialAttack();
@@ -40,14 +44,12 @@ class Boss {
     }
 
     fireRadialAttack() {
-        // Fire 12 bullets in a circle
         let count = 12;
         for (let i = 0; i < count; i++) {
             let theta = (TWO_PI / count) * i + this.angle;
-            // Spread in X-Y plane, moving towards player in Z
-            let v = createVector(sin(theta) * 10, cos(theta) * 10, 20); // Towards camera
+            let v = createVector(sin(theta) * 10, cos(theta) * 10, 20);
             if (typeof enemyBullets !== 'undefined') {
-                // SPAWN FURTHER FRONT (z + 600) to clear boss mesh
+                // FIX: Spawn bullets further ahead to prevent clipping (z + 600)
                 enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z + 600, v, 'ENEMY'));
             }
         }
@@ -57,14 +59,18 @@ class Boss {
         // 1. Check Shields
         for (let s of this.shields) {
             if (!s.active) continue;
-            // Calculate shield world position
             let sx = this.pos.x + cos(this.angle + s.offsetAngle) * s.dist;
             let sy = this.pos.y + sin(this.angle + s.offsetAngle) * s.dist;
-            let sz = this.pos.z; // Shields are roughly on same Z plane as center for simplicity
+            let sz = this.pos.z;
 
             let d = dist(impactPos.x, impactPos.y, impactPos.z, sx, sy, sz);
-            if (d < s.size / 2 + 50) { // Hit Shield
+            if (d < s.size / 2 + 50) {
                 s.hp -= damage;
+
+                // --- TRIGGER SHAKE ---
+                this.shakeTimer = 10;
+                // ---------------------
+
                 if (s.hp <= 0) {
                     s.active = false;
                     if (typeof spawnExplosion === 'function') spawnExplosion(sx, sy, sz);
@@ -77,8 +83,13 @@ class Boss {
         let d = dist(impactPos.x, impactPos.y, impactPos.z, this.pos.x, this.pos.y, this.pos.z);
         if (d < this.coreSize / 2 + 50) {
             this.coreHp -= damage;
+
+            // --- TRIGGER SHAKE ---
+            this.shakeTimer = 10;
+            // ---------------------
+
             if (this.coreHp <= 0) {
-                this.active = false; // Boss Defeated
+                this.active = false;
                 return 'DESTROYED';
             }
             return 'CORE';
@@ -89,12 +100,25 @@ class Boss {
 
     display() {
         push();
-        translate(this.pos.x, this.pos.y, this.pos.z);
+
+        // --- APPLY SHAKE ---
+        let shakeX = 0, shakeY = 0, shakeZ = 0;
+        if (this.shakeTimer > 0) {
+            let mag = 20; // Shake magnitude
+            shakeX = random(-mag, mag);
+            shakeY = random(-mag, mag);
+            shakeZ = random(-mag, mag);
+            this.shakeTimer--;
+        }
+        translate(this.pos.x + shakeX, this.pos.y + shakeY, this.pos.z + shakeZ);
+        // -------------------
 
         // Draw Core
         noFill();
         strokeWeight(4);
-        stroke(255, 0, 0);
+        // Flash color on hit
+        if (this.shakeTimer > 0) stroke(255, 255, 0); // Yellow flash
+        else stroke(255, 0, 0);
 
         push();
         rotateY(this.angle * 0.5);
@@ -102,25 +126,27 @@ class Boss {
         pop();
 
         // Inner Core (Glowing)
-        fill(255, 0, 0, 100);
+        if (this.shakeTimer > 0) fill(255, 200, 0, 200);
+        else fill(255, 0, 0, 100);
+
         box(this.coreSize * 0.3 + sin(frameCount * 0.1) * 50);
 
         // Draw Shields
         for (let s of this.shields) {
             if (!s.active) continue;
             push();
-            // Orbit rotation logic
-            // We use Z-rotation for orbital position in X-Y plane
             rotateZ(this.angle + s.offsetAngle);
             translate(s.dist, 0, 0);
-
-            // Local rotation of the shield block
             rotateX(this.angle * 2);
             rotateY(this.angle);
 
             stroke(0, 255, 255);
             strokeWeight(3);
-            fill(0, 50, 200, 30);
+
+            // Flash shield on hit
+            if (this.shakeTimer > 0) fill(200, 255, 255, 100);
+            else fill(0, 50, 200, 30);
+
             box(s.size);
             pop();
         }
