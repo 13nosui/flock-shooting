@@ -13,9 +13,10 @@ let started = false;
 let score = 0;
 let isInverted = false;
 let grid;
+let bullets = [];
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
-let osc, noiseOsc, env;
+let osc, noiseOsc, env, shotEnv;
 
 function preload() {
     myFont = loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf');
@@ -29,6 +30,9 @@ function setup() {
     noiseOsc = new p5.Oscillator('white');
     env = new p5.Envelope();
     env.setADSR(0.01, 0.1, 0, 0);
+
+    shotEnv = new p5.Envelope();
+    shotEnv.setADSR(0.001, 0.05, 0, 0);
 
     noiseOsc.amp(0);
     noiseOsc.start();
@@ -65,6 +69,26 @@ function draw() {
 
     grid.update(15);
     grid.display();
+
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].update();
+        bullets[i].display();
+
+        // Collision with obstacles
+        for (let j = obstacles.length - 1; j >= 0; j--) {
+            let b = bullets[i];
+            let o = obstacles[j];
+            let d = dist(b.pos.x, b.pos.y, b.pos.z, o.pos.x, o.pos.y, o.pos.z);
+            if (d < o.size / 2 + 20) {
+                o.active = false;
+                b.active = false;
+                triggerHitEffect();
+                break;
+            }
+        }
+
+        if (!bullets[i].active) bullets.splice(i, 1);
+    }
 
     if (frameCount % 60 === 0) obstacles.push(new VoxelObstacle());
     for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -190,5 +214,44 @@ function drawStartScreen() {
     pop();
 }
 
-function mousePressed() { if (!started) { userStartAudio(); started = true; } }
-function keyPressed() { if (!started) mousePressed(); }
+function mousePressed() {
+    if (!started) {
+        userStartAudio(); started = true;
+    } else {
+        fire();
+    }
+}
+function keyPressed() {
+    if (!started) {
+        mousePressed();
+    } else if (key === ' ') {
+        fire();
+    }
+}
+
+function getFlockDensity() {
+    if (!leader || particles.length <= 1) return 0;
+    let totalDist = 0;
+    for (let p of particles) {
+        if (p === leader) continue;
+        totalDist += dist(leader.pos.x, leader.pos.y, leader.pos.z, p.pos.x, p.pos.y, p.pos.z);
+    }
+    return totalDist / (particles.length - 1);
+}
+
+function fire() {
+    let density = getFlockDensity();
+    let isLaser = density < 80;
+
+    shotEnv.play(osc);
+    osc.freq(isLaser ? 440 : 880);
+
+    if (isLaser) {
+        bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, createVector(0, 0, -50), true));
+    } else {
+        for (let i = -2; i <= 2; i++) {
+            let v = createVector(i * 2, 0, -40);
+            bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, v, false));
+        }
+    }
+}
