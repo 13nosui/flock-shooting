@@ -21,6 +21,8 @@ let leaderHistory = [];
 const MAX_HISTORY = 100;
 let items = [];
 let gameState = "START";
+let lastShotTime = 0;
+const SHOT_COOLDOWN = 150; // Milliseconds between shots
 
 function preload() {
     myFont = loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf');
@@ -61,6 +63,20 @@ function updateBounds() {
     boundsX = width / 2;
     boundsY = height / 2;
     boundsZ = 1000;
+}
+
+function isTouchingUI() {
+    // Left Stick Zone
+    let stickX = width * 0.15;
+    let stickY = height - 100;
+    if (dist(mouseX, mouseY, stickX, stickY) < 100) return true;
+
+    // Right Slider Zone
+    let sliderX = width * 0.85;
+    let sliderY = height - 100;
+    if (abs(mouseX - sliderX) < 40 && abs(mouseY - sliderY) < 100) return true;
+
+    return false;
 }
 
 function draw() {
@@ -224,6 +240,17 @@ function handleInput() {
     } else {
         osc.amp(0, 0.2);
     }
+
+    // Auto-Fire Logic
+    if (gameState === "PLAY") {
+        if ((mouseIsPressed && !isTouchingUI()) || keyIsDown(32)) {
+            let currentTime = millis();
+            if (currentTime - lastShotTime > SHOT_COOLDOWN) {
+                fire();
+                lastShotTime = currentTime;
+            }
+        }
+    }
 }
 
 
@@ -325,13 +352,6 @@ function mousePressed() {
         userStartAudio(); gameState = "PLAY";
     } else if (gameState === "GAMEOVER") {
         resetGame();
-    } else {
-        // UI Aware Firing: Only fire if outside control zones
-        let inLeftStick = mouseX < width * 0.4;
-        let inRightSlider = mouseX > width * 0.6;
-        if (!inLeftStick && !inRightSlider) {
-            fire();
-        }
     }
 }
 function keyPressed() {
@@ -339,8 +359,6 @@ function keyPressed() {
         mousePressed();
     } else if (gameState === "GAMEOVER") {
         resetGame();
-    } else if (key === ' ') {
-        fire();
     }
 }
 
