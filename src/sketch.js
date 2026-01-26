@@ -13,6 +13,7 @@ let isInverted = false;
 let grid;
 let bullets = [];
 let enemyBullets = [];
+let scenery = [];
 let curCamX = 0;
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
@@ -483,6 +484,7 @@ function resetGame() {
     obstacles = [];
     allDebris = [];
     enemyBullets = [];
+    scenery = [];
     score = 0;
     leaderHistory = [];
     weaponMode = 'NORMAL';
