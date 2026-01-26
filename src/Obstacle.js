@@ -14,22 +14,24 @@ class VoxelObstacle {
             this.speed = 11 * difficulty; // Slow
             this.maxHp = floor(15 + (difficulty - 1) * 15);
             this.color = color(100, 50, 150); // Dark Purple
+            this.fireTimer = random(100, 150) / difficulty; // Slow start for Tank
         } else if (r < 0.3) {
             this.type = 'INTERCEPTOR';
             this.size = random(80, 120);
             this.speed = 40 * difficulty; // Fast
             this.maxHp = 1; // Always one shot
             this.color = color(255, 255, 100); // Yellow
+            this.fireTimer = random(20, 50) / difficulty; // FAST start!
         } else {
             this.type = 'NORMAL';
             this.size = random(180, 350);
             this.speed = 22 * difficulty;
             this.maxHp = floor(3 + (difficulty - 1) * 5);
             this.color = null; // Default red shades for hits
+            this.fireTimer = random(50, 90) / difficulty; // Moderate start
         }
 
         this.hp = this.maxHp;
-        this.fireTimer = random(120, 240) / difficulty;
     }
 
     getDropItemType() {
@@ -58,10 +60,9 @@ class VoxelObstacle {
                 let dir = p5.Vector.sub(leader.pos, this.pos);
 
                 // Determine Bullet Speed based on Enemy Type
-                // MUST be faster than the enemy's own speed (Tank: ~11, Normal: ~22, Interceptor: ~40)
-                let bulletSpeed = 15; // Default (Tank)
-                if (this.type === 'NORMAL') bulletSpeed = 45;
-                if (this.type === 'INTERCEPTOR') bulletSpeed = 70;
+                let bulletSpeed = 20; // Default (Tank)
+                if (this.type === 'NORMAL') bulletSpeed = 50;
+                if (this.type === 'INTERCEPTOR') bulletSpeed = 80;
 
                 // Spawn position: Start slightly in front of the enemy to avoid clipping
                 let spawnZ = this.pos.z + (this.size / 2) + 20;
