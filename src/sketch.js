@@ -12,6 +12,7 @@ let score = 0;
 let isInverted = false;
 let grid;
 let bullets = [];
+let curCamX = 0;
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
 let osc, noiseOsc, env, shotEnv;
@@ -43,6 +44,7 @@ function setup() {
         if (i === 0) leader = p;
     }
     grid = new Grid();
+    curCamX = 0;
 }
 
 function updateBounds() {
@@ -62,8 +64,17 @@ function draw() {
     handleInput();
 
     push();
-    let camZ = 1000; // 少しカメラを引き、広がりを見せる
-    camera(leader.pos.x * 0.5, leader.pos.y * 0.5, camZ, leader.pos.x * 0.5, leader.pos.y * 0.5, 0, 0, 1, 0);
+    // High-angle top-down view
+    curCamX = lerp(curCamX, leader.pos.x * 0.5, 0.05);
+    let camY = -1200; // Fixed high altitude
+    let camZ = leader.pos.z + 800; // Keep distance behind
+
+    // Look slightly ahead of the leader
+    let lookX = leader.pos.x * 0.2;
+    let lookY = 0;
+    let lookZ = leader.pos.z - 500;
+
+    camera(curCamX, camY, camZ, lookX, lookY, lookZ, 0, 1, 0);
 
     grid.update(15);
     grid.display();
