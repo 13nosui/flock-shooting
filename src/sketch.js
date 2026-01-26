@@ -14,6 +14,7 @@ let grid;
 let bullets = [];
 let enemyBullets = [];
 let scenery = [];
+let boss = null;
 let curCamX = 0;
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
@@ -139,6 +140,19 @@ function draw() {
     grid.update(forwardSpeed);
     grid.display();
 
+    // Boss Loop
+    if (!boss && score > 500) boss = new Boss();
+    if (boss) {
+        boss.update();
+        boss.display();
+        if (!boss.active) {
+            spawnExplosion(boss.pos.x, boss.pos.y, boss.pos.z);
+            addScreenShake(50);
+            score += 1000;
+            boss = null;
+        }
+    }
+
     // Scenery Logic
     if (frameCount % 10 === 0) {
         scenery.push(new Scenery());
@@ -178,6 +192,19 @@ function draw() {
                     b.active = false;
                 }
                 break;
+            }
+        }
+
+        // Check Boss Collision
+        if (boss && bullets[i].active) {
+            let hitResult = boss.takeDamage(1, bullets[i].pos);
+            if (hitResult !== 'MISS') {
+                spawnDamageText(bullets[i].pos.x, bullets[i].pos.y - 100, bullets[i].pos.z, 1);
+                if (!bullets[i].penetrate) bullets[i].active = false;
+
+                if (hitResult === 'SHIELD') {
+                    spawnDamageText(bullets[i].pos.x, bullets[i].pos.y - 100, bullets[i].pos.z, "SHIELD");
+                }
             }
         }
 
@@ -229,7 +256,7 @@ function draw() {
     let difficulty = 1.0 + (score * 0.001);
     let spawnInterval = floor(map(constrain(difficulty, 1, 5), 1, 5, 60, 15));
 
-    if (frameCount % spawnInterval === 0) obstacles.push(new VoxelObstacle(difficulty));
+    if (!boss && frameCount % spawnInterval === 0) obstacles.push(new VoxelObstacle(difficulty));
     for (let i = obstacles.length - 1; i >= 0; i--) {
         obstacles[i].update();
         obstacles[i].display();
@@ -495,6 +522,7 @@ function resetGame() {
     allDebris = [];
     enemyBullets = [];
     scenery = [];
+    boss = null;
     score = 0;
     leaderHistory = [];
     weaponMode = 'NORMAL';
