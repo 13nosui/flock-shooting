@@ -1,19 +1,18 @@
 class Debris {
     constructor(x, y, z) {
         this.pos = createVector(x, y, z);
-        // Explosive speed!
-        this.vel = p5.Vector.random3D().mult(random(15, 45));
-        this.angVel = p5.Vector.random3D().mult(random(0.1, 0.3));
+        // WIDER SPREAD: Much higher velocity magnitude
+        this.vel = p5.Vector.random3D().mult(random(30, 100));
+        this.angVel = p5.Vector.random3D().mult(random(0.1, 0.4));
         this.size = random(5, 25);
         this.life = 255;
-        // Random neon colors
-        let colors = [color(255, 50, 50), color(0, 255, 255), color(255, 255, 0), color(255)];
-        this.col = random(colors);
+        // RED ONLY: Varying shades of intense red
+        this.col = color(255, random(0, 50), random(0, 50));
     }
 
     update() {
         this.pos.add(this.vel);
-        this.vel.mult(0.92); // Drag to slow them down gracefully
+        this.vel.mult(0.95); // Slightly less drag to let them fly further
         this.life -= 4; // Fade out
     }
 
