@@ -29,6 +29,9 @@ let weaponTimer = 0;
 let enemiesDefeated = 0;
 let totalDamageDealt = 0;
 let totalBulletsFired = 0;
+let floatingTexts = [];
+let shakeMagnitude = 0;
+let shakeDecay = 0.9;
 
 function preload() {
     myFont = loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf');
@@ -109,15 +112,25 @@ function draw() {
     push();
     // High-angle top-down view
     curCamX = lerp(curCamX, leader.pos.x * 0.5, 0.05);
-    let camY = -1200; // Fixed high altitude
-    let camZ = leader.pos.z + 800; // Keep distance behind
 
     // Look slightly ahead of the leader
     let lookX = leader.pos.x * 0.2;
     let lookY = 0;
     let lookZ = leader.pos.z - 500;
 
-    camera(curCamX, camY, camZ, lookX, lookY, lookZ, 0, 1, 0);
+    // Shake logic before camera
+    let shakeX = random(-shakeMagnitude, shakeMagnitude);
+    let shakeY = random(-shakeMagnitude, shakeMagnitude);
+    let shakeZ = random(-shakeMagnitude, shakeMagnitude);
+    shakeMagnitude *= shakeDecay;
+    if (shakeMagnitude < 0.1) shakeMagnitude = 0;
+
+    // Apply to camera position
+    let finalCamX = curCamX + shakeX;
+    let finalCamY = -1200 + shakeY;
+    let finalCamZ = leader.pos.z + 800 + shakeZ;
+
+    camera(finalCamX, finalCamY, finalCamZ, lookX, lookY, lookZ, 0, 1, 0);
 
     // Sync grid speed with leader's forward velocity
     let forwardSpeed = 15 - leader.vel.z;
@@ -137,10 +150,12 @@ function draw() {
                 // Enemy takes damage
                 let isDestroyed = o.takeDamage(1);
                 totalDamageDealt++;
+                spawnDamageText(o.pos.x, o.pos.y, o.pos.z, 1);
 
                 if (isDestroyed) {
                     // Death Logic
                     enemiesDefeated++;
+                    if (o.type === 'TANK') addScreenShake(15);
                     let dropType = o.getDropItemType();
                     items.push(new Item(o.pos.x, o.pos.y, o.pos.z, dropType));
                     spawnExplosion(o.pos.x, o.pos.y, o.pos.z);
@@ -203,6 +218,13 @@ function draw() {
         allDebris[i].update();
         allDebris[i].display();
         if (allDebris[i].life <= 0) allDebris.splice(i, 1);
+    }
+
+    // Update Floating Texts
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        floatingTexts[i].update();
+        floatingTexts[i].display();
+        if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1);
     }
 
     leader.updateAsLeader();
@@ -415,6 +437,7 @@ function keyPressed() {
 
 function damageFlock(amount) {
     triggerHitEffect();
+    addScreenShake(30);
     for (let i = 0; i < amount; i++) {
         if (particles.length > 1) {
             particles.pop();
@@ -446,6 +469,8 @@ function resetGame() {
     enemiesDefeated = 0;
     totalDamageDealt = 0;
     totalBulletsFired = 0;
+    floatingTexts = [];
+    shakeMagnitude = 0;
     setup();
     gameState = "PLAY";
 }
@@ -527,4 +552,18 @@ function spawnExplosion(x, y, z) {
     for (let i = 0; i < count; i++) {
         allDebris.push(new Debris(x, y, z));
     }
+}
+
+function spawnDamageText(x, y, z, damage) {
+    let size = random(20, 30);
+    let c = color(255, 255, 0); // Yellow for hits
+    if (damage > 1) { // Critical / High damage
+        size = 50;
+        c = color(255, 50, 50); // Red
+    }
+    floatingTexts.push(new FloatingText(x, y, z, str(damage), size, c));
+}
+
+function addScreenShake(amount) {
+    shakeMagnitude = max(shakeMagnitude, amount);
 }
