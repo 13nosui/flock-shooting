@@ -25,7 +25,9 @@ function preload() {
 }
 
 function setup() {
+    setAttributes('antialias', false);
     createCanvas(windowWidth, windowHeight, WEBGL);
+    noSmooth();
     updateBounds();
 
     osc = new p5.Oscillator('sine');
