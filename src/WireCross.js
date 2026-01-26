@@ -49,7 +49,7 @@ class WireCross {
         for (let i = 1; i < 7; i++) {
             let other = agents[(myIdx + i) % agents.length];
             let distToOther = p5.Vector.dist(this.pos, other.pos);
-            if (distToOther > 1 && distToOther < 150) {
+            if (distToOther > 1 && distToOther < 200) {
                 let diff = p5.Vector.sub(this.pos, other.pos);
                 diff.normalize().div(distToOther);
                 sep.add(diff);
@@ -57,7 +57,7 @@ class WireCross {
             }
         }
         if (count > 0) {
-            sep.setMag(8.0);
+            sep.setMag(15.0);
             this.acc.add(sep);
         }
     }

@@ -76,7 +76,9 @@ function draw() {
 
     camera(curCamX, camY, camZ, lookX, lookY, lookZ, 0, 1, 0);
 
-    grid.update(15);
+    // Sync grid speed with leader's forward velocity
+    let forwardSpeed = 15 - leader.vel.z;
+    grid.update(forwardSpeed);
     grid.display();
 
     for (let i = bullets.length - 1; i >= 0; i--) {
@@ -119,25 +121,41 @@ function draw() {
 }
 
 function handleInput() {
-    moveLeft = false; moveRight = false; moveUp = false; moveDown = false;
     let wind = createVector(0, 0, 0);
     let power = 5.0;
 
-    if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) { wind.x = -power; moveLeft = true; }
-    if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) { wind.x = power; moveRight = true; }
-    if (keyIsDown(UP_ARROW) || keyIsDown(87)) { wind.y = -power; moveUp = true; }
-    if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) { wind.y = power; moveDown = true; }
+    // Keyboard X/Z (Forward/Backward/Left/Right)
+    if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) wind.x = -power;
+    if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) wind.x = power;
+    if (keyIsDown(UP_ARROW) || keyIsDown(87)) wind.z = -power;
+    if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) wind.z = power;
 
-    if (mouseIsPressed && mouseY > height * 0.5) {
-        if (mouseX < width * 0.3) { wind.x = -power; moveLeft = true; }
-        else if (mouseX > width * 0.7) { wind.x = power; moveRight = true; }
-        else {
-            if (mouseY < height * 0.75) { wind.y = -power; moveUp = true; }
-            else { wind.y = power; moveDown = true; }
+    // Keyboard Y (Altitude)
+    if (keyIsDown(SHIFT) || keyIsDown(81)) wind.y = -power; // UP
+    if (keyIsDown(32) || keyIsDown(69)) wind.y = power;    // DOWN (Space or E)
+
+    // Virtual Joystick / Slider Logic
+    if (mouseIsPressed) {
+        // Left zone: Joystick (Movement on X-Z plane)
+        if (mouseX < width * 0.5) {
+            let joyX = width * 0.2;
+            let joyY = height - 120;
+            let dx = mouseX - joyX;
+            let dy = mouseY - joyY;
+            let d = dist(mouseX, mouseY, joyX, joyY);
+            let angle = atan2(dy, dx);
+            let dist_val = min(d, 60);
+            wind.x = map(dist_val * cos(angle), -60, 60, -power, power);
+            wind.z = map(dist_val * sin(angle), -60, 60, -power, power);
+        }
+        // Right zone: Altitude Control (Movement on Y axis)
+        if (mouseX > width * 0.6) {
+            let sliderY = height - 120;
+            if (mouseY < sliderY - 20) wind.y = -power;
+            else if (mouseY > sliderY + 20) wind.y = power;
         }
     }
 
-    // エラー箇所修正：leaderが存在し、applyForceメソッドがあるか確認
     if (leader && leader.applyForce) {
         leader.applyForce(wind);
     }
@@ -159,15 +177,56 @@ function drawUI() {
     ortho(-width / 2, width / 2, -height / 2, height / 2, 0, 1000);
     drawingContext.disable(drawingContext.DEPTH_TEST);
     textFont(myFont);
+
+    let col = isInverted ? 0 : 255;
+    stroke(col, 150);
+    noFill();
+
+    // Bottom-Left: Virtual Joystick (X-Z)
+    let joyX = -width * 0.3;
+    let joyY = height * 0.35;
+    strokeWeight(1);
+    ellipse(joyX, joyY, 120, 120);
+    line(joyX - 10, joyY, joyX + 10, joyY);
+    line(joyX, joyY - 10, joyX, joyY + 10);
+
+    // Stick visualization
+    if (mouseIsPressed && mouseX < width * 0.5) {
+        let dx = mouseX - width * 0.2;
+        let dy = mouseY - (height - 120);
+        let d = dist(0, 0, dx, dy);
+        let angle = atan2(dy, dx);
+        let r = min(d, 60);
+        ellipse(joyX + cos(angle) * r, joyY + sin(angle) * r, 30, 30);
+    } else {
+        ellipse(joyX, joyY, 30, 30);
+    }
+
     textAlign(CENTER, CENTER);
-    let txtColor = isInverted ? 0 : 255;
-    textSize(32);
-    fill(moveLeft ? '#FF0000' : txtColor); text("LEFT", -width * 0.35, height * 0.35);
-    fill(moveRight ? '#FF0000' : txtColor); text("RIGHT", width * 0.35, height * 0.35);
-    fill(moveUp ? '#FF0000' : txtColor); text("UP", 0, height * 0.28);
-    fill(moveDown ? '#FF0000' : txtColor); text("DOWN", 0, height * 0.42);
+    textSize(10);
+    fill(col, 150); noStroke();
+    text("MOVE", joyX, joyY - 75);
+    text("FWD", joyX, joyY - 45);
+    text("BWD", joyX, joyY + 45);
+    text("L", joyX - 45, joyY);
+    text("R", joyX + 45, joyY);
+
+    // Bottom-Right: Altitude Control (Y)
+    let altX = width * 0.3;
+    let altY = height * 0.35;
+    noFill(); stroke(col, 150);
+    rect(altX - 25, altY - 60, 50, 120);
+    line(altX - 25, altY, altX + 25, altY);
+
+    fill(col, 150); noStroke();
+    text("ALTITUDE", altX, altY - 75);
+    text("UP", altX, altY - 40);
+    text("DOWN", altX, altY + 40);
+
+    // Stats
     textAlign(LEFT); textSize(18);
     text("SYNC_RATE: " + floor(score) + "%", -width * 0.45, -height * 0.45);
+
     drawingContext.enable(drawingContext.DEPTH_TEST);
     pop();
 }
