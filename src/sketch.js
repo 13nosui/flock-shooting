@@ -12,6 +12,7 @@ let score = 0;
 let isInverted = false;
 let grid;
 let bullets = [];
+let enemyBullets = [];
 let curCamX = 0;
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
@@ -170,6 +171,25 @@ function draw() {
         }
 
         if (!bullets[i].active) bullets.splice(i, 1);
+    }
+
+    // Update Enemy Bullets
+    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        let eb = enemyBullets[i];
+        eb.update();
+        eb.display();
+
+        // Hit Player?
+        if (leader && eb.active) {
+            let d = dist(eb.pos.x, eb.pos.y, eb.pos.z, leader.pos.x, leader.pos.y, leader.pos.z);
+            if (d < 30) {
+                damageFlock(1);
+                eb.active = false;
+                addScreenShake(5);
+            }
+        }
+
+        if (!eb.active) enemyBullets.splice(i, 1);
     }
 
     for (let i = items.length - 1; i >= 0; i--) {
@@ -462,6 +482,7 @@ function resetGame() {
     items = [];
     obstacles = [];
     allDebris = [];
+    enemyBullets = [];
     score = 0;
     leaderHistory = [];
     weaponMode = 'NORMAL';

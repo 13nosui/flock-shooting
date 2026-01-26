@@ -17,6 +17,9 @@ class Bullet {
         } else if (this.mode === 'HOMING') {
             this.size = 40;
             this.col = color(0, 255, 100); // Green
+        } else if (this.mode === 'ENEMY') {
+            this.size = 100;
+            this.col = color(255, 100, 0); // Orange
         } else {
             this.size = 80;
             this.col = color(isInverted ? 0 : 255);

@@ -29,6 +29,7 @@ class VoxelObstacle {
         }
 
         this.hp = this.maxHp;
+        this.fireTimer = random(120, 240) / difficulty;
     }
 
     getDropItemType() {
@@ -47,6 +48,19 @@ class VoxelObstacle {
     update() {
         this.pos.z += this.speed;
         if (this.pos.z > 1000) this.active = false;
+
+        // Firing Logic
+        this.fireTimer--;
+        if (this.fireTimer <= 0 && this.active && this.pos.z < 0) {
+            if (typeof leader !== 'undefined' && typeof enemyBullets !== 'undefined') {
+                let dir = p5.Vector.sub(leader.pos, this.pos);
+                dir.setMag(15); // Bullet speed
+                enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z, dir, 'ENEMY'));
+
+                // Reset Timer
+                this.fireTimer = random(120, 240) / this.difficulty;
+            }
+        }
     }
 
     takeDamage(amount) {
