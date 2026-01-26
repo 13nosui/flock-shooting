@@ -56,7 +56,7 @@ class VoxelObstacle {
             if (leader && this.pos.z < leader.pos.z + 200) {
                 let dir = p5.Vector.sub(leader.pos, this.pos);
                 dir.setMag(15); // Bullet speed
-                enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z, dir, 'ENEMY'));
+                enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z + 50, dir, 'ENEMY'));
 
                 // Reset Timer
                 this.fireTimer = random(120, 240) / this.difficulty;

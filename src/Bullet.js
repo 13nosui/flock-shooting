@@ -65,14 +65,31 @@ class Bullet {
     display() {
         push();
         translate(this.pos.x, this.pos.y, this.pos.z);
+
+        // --- FIX: Rotate bullet to face travel direction ---
+        // Calculate rotation angles based on velocity
+        if (this.vel.mag() > 0) {
+            let angleY = atan2(this.vel.x, this.vel.z);
+            let angleX = -asin(this.vel.y / (this.vel.mag() + 0.001));
+            rotateY(angleY);
+            rotateX(angleX);
+        }
+        // --------------------------------------------------
+
         stroke(this.col);
 
         if (this.mode === 'LASER') {
             strokeWeight(5);
+            // Draw laser slightly longer
             line(0, 0, 0, 0, 0, this.size);
         } else if (this.mode === 'HOMING') {
             strokeWeight(3);
             box(15);
+        } else if (this.mode === 'ENEMY') {
+            strokeWeight(4);
+            stroke(255, 100, 0); // Force Orange for visibility
+            // Draw enemy bullet as a longer streak
+            line(0, 0, 0, 0, 0, this.size);
         } else {
             strokeWeight(1.5);
             line(0, 0, 0, 0, 0, this.size);
