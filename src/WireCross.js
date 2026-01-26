@@ -6,7 +6,7 @@ class WireCross {
         this.acc = createVector(0, 0, 0);
         this.size = isLeader ? 40 : 15;
         // 各個体に固有のオフセット（目標地点のバラツキ）を与える
-        this.offset = p5.Vector.random3D().mult(random(30, 150));
+        this.offset = p5.Vector.random3D().mult(random(100, 400));
         if (isLeader) this.offset.mult(0);
     }
 
@@ -37,7 +37,7 @@ class WireCross {
         let d = steer.mag();
 
         if (d > 0) {
-            let strength = map(d, 0, 600, 0.1, 4.0);
+            let strength = map(d, 0, 800, 0.05, 2.5);
             steer.setMag(strength);
             this.acc.add(steer);
         }
@@ -49,7 +49,7 @@ class WireCross {
         for (let i = 1; i < 7; i++) {
             let other = agents[(myIdx + i) % agents.length];
             let distToOther = p5.Vector.dist(this.pos, other.pos);
-            if (distToOther > 1 && distToOther < 80) {
+            if (distToOther > 1 && distToOther < 150) {
                 let diff = p5.Vector.sub(this.pos, other.pos);
                 diff.normalize().div(distToOther);
                 sep.add(diff);
@@ -57,7 +57,7 @@ class WireCross {
             }
         }
         if (count > 0) {
-            sep.setMag(3.5);
+            sep.setMag(8.0);
             this.acc.add(sep);
         }
     }
