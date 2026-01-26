@@ -185,7 +185,7 @@ function draw() {
             if (d < 30) {
                 damageFlock(1);
                 eb.active = false;
-                addScreenShake(5);
+                addScreenShake(10);
             }
         }
 

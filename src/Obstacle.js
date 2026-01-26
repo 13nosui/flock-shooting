@@ -51,8 +51,9 @@ class VoxelObstacle {
 
         // Firing Logic
         this.fireTimer--;
-        if (this.fireTimer <= 0 && this.active && this.pos.z < 0) {
-            if (typeof leader !== 'undefined' && typeof enemyBullets !== 'undefined') {
+        if (this.fireTimer <= 0 && this.active) {
+            // Only fire if somewhat in front of the leader (don't fire from way behind)
+            if (leader && this.pos.z < leader.pos.z + 200) {
                 let dir = p5.Vector.sub(leader.pos, this.pos);
                 dir.setMag(15); // Bullet speed
                 enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z, dir, 'ENEMY'));
