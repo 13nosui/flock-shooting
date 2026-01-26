@@ -139,6 +139,16 @@ function draw() {
     grid.update(forwardSpeed);
     grid.display();
 
+    // Scenery Logic
+    if (frameCount % 10 === 0) {
+        scenery.push(new Scenery());
+    }
+    for (let i = scenery.length - 1; i >= 0; i--) {
+        scenery[i].update(30); // Parallax speed
+        scenery[i].display();
+        if (!scenery[i].active) scenery.splice(i, 1);
+    }
+
     for (let i = bullets.length - 1; i >= 0; i--) {
         bullets[i].update();
         bullets[i].display();
