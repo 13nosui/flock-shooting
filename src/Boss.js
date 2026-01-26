@@ -47,7 +47,8 @@ class Boss {
             // Spread in X-Y plane, moving towards player in Z
             let v = createVector(sin(theta) * 10, cos(theta) * 10, 20); // Towards camera
             if (typeof enemyBullets !== 'undefined') {
-                enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z + 300, v, 'ENEMY'));
+                // SPAWN FURTHER FRONT (z + 600) to clear boss mesh
+                enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z + 600, v, 'ENEMY'));
             }
         }
     }

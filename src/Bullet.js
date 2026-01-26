@@ -88,10 +88,18 @@ class Bullet {
             strokeWeight(3);
             box(15);
         } else if (this.mode === 'ENEMY') {
-            strokeWeight(4);
-            stroke(255, 100, 0); // Force Orange for visibility
-            // Draw enemy bullet as a longer streak
-            line(0, 0, 0, 0, 0, this.size);
+            // --- FIX: Use Solid Box for Visibility ---
+            noStroke();
+            fill(255, 100, 0); // Bright Orange Core
+
+            // Draw a solid block: W=30, H=30, L=Size
+            box(30, 30, this.size);
+
+            // Add a wireframe cage for style
+            stroke(255, 150, 0);
+            strokeWeight(2);
+            noFill();
+            box(35, 35, this.size + 10);
         } else {
             strokeWeight(1.5);
             line(0, 0, 0, 0, 0, this.size);
