@@ -10,6 +10,7 @@ class WireCross {
         if (isLeader) this.offset.mult(0);
 
         this.followDelay = floor(random(0, 60));
+        this.noiseOffset = random(10000);
     }
 
     // エラー修正：メソッドをクラス内に定義
@@ -18,6 +19,17 @@ class WireCross {
     }
 
     update() {
+        // Organic Idle Motion (Drift)
+        let t = frameCount * 0.005; // Slow time scale
+        let scale = 0.002; // Spatial scale
+        let strength = 0.15; // Gentle force
+
+        let nX = map(noise(t, this.pos.y * scale + this.noiseOffset), 0, 1, -strength, strength);
+        let nY = map(noise(this.pos.x * scale + this.noiseOffset, t), 0, 1, -strength, strength);
+        let nZ = map(noise(this.pos.x * scale, this.pos.y * scale, t + this.noiseOffset), 0, 1, -strength, strength);
+
+        this.acc.add(createVector(nX, nY, nZ));
+
         this.vel.add(this.acc);
         this.vel.limit(this.isLeader ? 45 : 32);
         this.pos.add(this.vel);
@@ -79,6 +91,12 @@ class WireCross {
     display() {
         push();
         translate(this.pos.x, this.pos.y, this.pos.z);
+
+        // Organic Rotation
+        let rotSpeed = 0.02;
+        rotateX(frameCount * rotSpeed + this.noiseOffset);
+        rotateY(frameCount * rotSpeed * 0.5 + this.noiseOffset);
+
         strokeWeight(this.isLeader ? 4 : 2);
         stroke(this.isLeader ? '#FF0000' : (isInverted ? 0 : 255));
         let s = this.size;
