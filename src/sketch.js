@@ -395,17 +395,32 @@ function getFlockDensity() {
 }
 
 function fire() {
+    let flockSize = particles.length;
     let density = getFlockDensity();
-    let isLaser = density < 80;
+
+    // Laser requires critical mass (e.g., 10+) and high density
+    let isLaser = (flockSize >= 10) && (density < 80);
 
     shotEnv.play(osc);
     osc.freq(isLaser ? 440 : 880);
 
     if (isLaser) {
+        // Laser shot
         bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, createVector(0, 0, -50), true));
     } else {
-        for (let i = -2; i <= 2; i++) {
-            let v = createVector(i * 2, 0, -40);
+        // Spread shot based on flock size
+        let spreadCount = 0; // Default to 1 shot (i=0)
+
+        if (flockSize >= 30) {
+            spreadCount = 2; // 5 shots (i = -2 to 2)
+        } else if (flockSize >= 10) {
+            spreadCount = 1; // 3 shots (i = -1 to 1)
+        } else {
+            spreadCount = 0; // 1 shot (i = 0)
+        }
+
+        for (let i = -spreadCount; i <= spreadCount; i++) {
+            let v = createVector(i * 3, 0, -40); // Increased spread width slightly
             bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, v, false));
         }
     }
