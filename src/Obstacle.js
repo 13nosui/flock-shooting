@@ -1,17 +1,48 @@
 class VoxelObstacle {
     constructor(difficulty = 1.0) {
         this.pos = createVector(random(-boundsX, boundsX), random(-boundsY, boundsY), -3000);
-        this.size = random(180, 350);
-        this.speed = 22 * difficulty;
         this.active = true;
         this.isHit = false;
-
-        // SCALE HP: Tougher as difficulty increases
-        // Base 3, +1 for every 1.0 increase in difficulty
-        this.maxHp = floor(3 + (difficulty - 1) * 5);
-        this.hp = this.maxHp;
-
         this.shakeTimer = 0;
+        this.difficulty = difficulty;
+
+        // Determine Type
+        let r = random();
+        if (r < 0.1) {
+            this.type = 'TANK';
+            this.size = random(400, 600);
+            this.speed = 11 * difficulty; // Slow
+            this.maxHp = floor(15 + (difficulty - 1) * 15);
+            this.color = color(100, 50, 150); // Dark Purple
+        } else if (r < 0.3) {
+            this.type = 'INTERCEPTOR';
+            this.size = random(80, 120);
+            this.speed = 40 * difficulty; // Fast
+            this.maxHp = 1; // Always one shot
+            this.color = color(255, 255, 100); // Yellow
+        } else {
+            this.type = 'NORMAL';
+            this.size = random(180, 350);
+            this.speed = 22 * difficulty;
+            this.maxHp = floor(3 + (difficulty - 1) * 5);
+            this.color = null; // Default red shades for hits
+        }
+
+        this.hp = this.maxHp;
+    }
+
+    getDropItemType() {
+        if (this.type === 'TANK') {
+            let r = random();
+            if (r < 0.4) return 'LASER';
+            if (r < 0.8) return 'HOMING';
+            return 'GROWTH';
+        }
+        // Small chance for weapon items from normal/interceptors
+        if (random() < 0.05) {
+            return random(['LASER', 'HOMING']);
+        }
+        return 'GROWTH';
     }
     update() {
         this.pos.z += this.speed;
@@ -52,8 +83,8 @@ class VoxelObstacle {
             stroke(255, 50, 50); // Bright Red
             strokeWeight(3);
         } else {
-            stroke(isInverted ? 0 : 255, 120);
-            strokeWeight(1);
+            stroke(this.color || (isInverted ? 0 : 255), this.type === 'TANK' ? 200 : 120);
+            strokeWeight(this.type === 'TANK' ? 2.5 : 1);
         }
 
         noFill();

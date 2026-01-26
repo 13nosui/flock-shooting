@@ -24,6 +24,8 @@ let gameState = "START";
 let lastShotTime = 0;
 const SHOT_COOLDOWN = 150; // Milliseconds between shots
 let allDebris = [];
+let weaponMode = 'NORMAL';
+let weaponTimer = 0;
 
 function preload() {
     myFont = loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf');
@@ -129,16 +131,19 @@ function draw() {
             let o = obstacles[j];
             let d = dist(b.pos.x, b.pos.y, b.pos.z, o.pos.x, o.pos.y, o.pos.z);
             if (d < o.size / 2 + 20) {
-                b.active = false;
-
                 // Enemy takes damage
                 let isDestroyed = o.takeDamage(1);
 
                 if (isDestroyed) {
                     // Death Logic
-                    items.push(new Item(o.pos.x, o.pos.y, o.pos.z));
+                    let dropType = o.getDropItemType();
+                    items.push(new Item(o.pos.x, o.pos.y, o.pos.z, dropType));
                     spawnExplosion(o.pos.x, o.pos.y, o.pos.z);
                     triggerHitEffect();
+                }
+
+                if (!b.penetrate) {
+                    b.active = false;
                 }
                 break;
             }
@@ -156,7 +161,13 @@ function draw() {
         if (d < 50) {
             itemEnv.play(osc);
             osc.freq(880);
-            growFlock(2);
+
+            if (items[i].type === 'GROWTH') {
+                growFlock(2);
+            } else {
+                weaponMode = items[i].type;
+                weaponTimer = 600; // 10 seconds
+            }
             items.splice(i, 1);
         } else if (!items[i].active) {
             items.splice(i, 1);
@@ -199,6 +210,11 @@ function draw() {
 
     drawUI();
     if (flashAlpha > 0) drawFlash();
+
+    if (weaponTimer > 0) {
+        weaponTimer--;
+        if (weaponTimer === 0) weaponMode = 'NORMAL';
+    }
 }
 
 function handleInput() {
@@ -334,6 +350,11 @@ function drawUI() {
     textAlign(LEFT); textSize(18);
     text("SYNC_RATE: " + floor(score) + "%", -width * 0.45, -height * 0.45);
 
+    if (weaponTimer > 0) {
+        fill(255, 200, 0);
+        text("WEAPON: " + weaponMode + " (" + ceil(weaponTimer / 60) + "s)", -width * 0.45, -height * 0.45 + 30);
+    }
+
     drawingContext.enable(drawingContext.DEPTH_TEST);
     pop();
 }
@@ -407,6 +428,8 @@ function resetGame() {
     allDebris = [];
     score = 0;
     leaderHistory = [];
+    weaponMode = 'NORMAL';
+    weaponTimer = 0;
     setup();
     gameState = "PLAY";
 }
@@ -434,30 +457,33 @@ function fire() {
     let flockSize = particles.length;
     let density = getFlockDensity();
 
-    // Laser requires critical mass (e.g., 10+) and high density
-    let isLaser = (flockSize >= 10) && (density < 80);
+    // Default Laser (Crit Mass)
+    let isLaserCrit = (flockSize >= 10) && (density < 80);
 
     shotEnv.play(osc);
-    osc.freq(isLaser ? 440 : 880);
 
-    if (isLaser) {
-        // Laser shot
-        bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, createVector(0, 0, -50), true));
-    } else {
-        // Spread shot based on flock size
-        let spreadCount = 0; // Default to 1 shot (i=0)
-
-        if (flockSize >= 30) {
-            spreadCount = 2; // 5 shots (i = -2 to 2)
-        } else if (flockSize >= 10) {
-            spreadCount = 1; // 3 shots (i = -1 to 1)
-        } else {
-            spreadCount = 0; // 1 shot (i = 0)
+    if (weaponMode === 'LASER') {
+        osc.freq(330);
+        bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, createVector(0, 0, -60), 'LASER'));
+    } else if (weaponMode === 'HOMING') {
+        osc.freq(660);
+        for (let i = -1; i <= 1; i++) {
+            let v = createVector(i * 10, random(-5, 5), -30);
+            bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, v, 'HOMING'));
         }
+    } else {
+        osc.freq(isLaserCrit ? 440 : 880);
+        if (isLaserCrit) {
+            bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, createVector(0, 0, -50), 'LASER'));
+        } else {
+            let spreadCount = 0;
+            if (flockSize >= 30) spreadCount = 2;
+            else if (flockSize >= 10) spreadCount = 1;
 
-        for (let i = -spreadCount; i <= spreadCount; i++) {
-            let v = createVector(i * 3, 0, -40); // Increased spread width slightly
-            bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, v, false));
+            for (let i = -spreadCount; i <= spreadCount; i++) {
+                let v = createVector(i * 3, 0, -40);
+                bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, v, 'NORMAL'));
+            }
         }
     }
 }
