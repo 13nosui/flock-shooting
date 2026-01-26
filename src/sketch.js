@@ -555,17 +555,29 @@ function spawnExplosion(x, y, z) {
 }
 
 function spawnDamageText(x, y, z, damage) {
-    // INCREASE SIZE: 100-150 is appropriate for world scale ~1000
-    let size = random(100, 150);
-    let c = color(255, 255, 0); // Yellow
+    // 1. Randomize Spawn Position (Scatter)
+    // This prevents numbers from stacking perfectly on top of each other
+    let scatterX = random(-40, 40);
+    let scatterY = random(-40, 40);
+    let scatterZ = random(50, 150); // Push TOWARDS camera (Z+) to ensure it's in front of enemy
+
+    // 2. Large Size
+    let size = random(80, 120);
+    let c = color(255); // White default
 
     if (damage > 1) {
-        size = 200; // Critical Hit -> Huge
+        size = 180; // Critical
         c = color(255, 50, 50); // Red
+        scatterZ += 100; // Pop out even more
     }
 
-    // Ensure Y offset places it clearly above the enemy
-    floatingTexts.push(new FloatingText(x, y, z, str(damage), size, c));
+    // 3. Create Text
+    let txt = new FloatingText(x + scatterX, y + scatterY, z + scatterZ, str(damage), size, c);
+
+    // 4. Add initial explosive velocity for "Pop" feel
+    txt.vel.add(p5.Vector.random3D().mult(5));
+
+    floatingTexts.push(txt);
 }
 
 function addScreenShake(amount) {

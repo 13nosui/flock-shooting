@@ -21,23 +21,22 @@ class FloatingText {
         push();
         translate(this.pos.x, this.pos.y, this.pos.z);
 
-        // 1. Face the Camera
-        rotateX(-PI / 3);
+        // 1. Face the Camera (Align with high-angle view)
+        rotateX(-PI / 4); // Approx 45 degrees up
 
-        // 2. Render Settings (High Contrast)
+        // 2. High Contrast Style (White Text, Black Stroke)
         stroke(0);
         strokeWeight(4);
-        fill(red(this.col), green(this.col), blue(this.col), map(this.life, 0, this.maxLife, 0, 255));
+        fill(255, map(this.life, 0, this.maxLife, 0, 255));
 
-        // 3. Ensure Font
-        if (typeof myFont !== 'undefined') {
-            textFont(myFont);
-        }
+        // 3. Force System Font (Safety)
+        textFont('sans-serif');
+        textStyle(BOLD);
 
         textAlign(CENTER, CENTER);
         textSize(this.size);
 
-        // 4. Force on top
+        // 4. Force On Top (Disable Depth Test)
         drawingContext.disable(drawingContext.DEPTH_TEST);
         text(this.txt, 0, 0);
         drawingContext.enable(drawingContext.DEPTH_TEST);
