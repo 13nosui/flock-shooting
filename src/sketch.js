@@ -17,6 +17,8 @@ let curCamX = 0;
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
 let osc, noiseOsc, env, shotEnv;
 let wheelForceY = 0;
+let leaderHistory = [];
+const MAX_HISTORY = 100;
 
 function preload() {
     myFont = loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf');
@@ -63,6 +65,12 @@ function draw() {
     }
 
     handleInput();
+
+    // Record leader history
+    if (leader) {
+        leaderHistory.unshift(leader.pos.copy());
+        if (leaderHistory.length > MAX_HISTORY) leaderHistory.pop();
+    }
 
     push();
     // High-angle top-down view
@@ -111,7 +119,7 @@ function draw() {
 
     leader.updateAsLeader();
     for (let p of particles) {
-        if (!p.isLeader) p.flock(particles, leader.pos);
+        if (!p.isLeader) p.flock(particles, leader.pos, leaderHistory);
         p.update();
         p.display();
     }

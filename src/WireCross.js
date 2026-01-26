@@ -8,6 +8,8 @@ class WireCross {
         // 各個体に固有のオフセット（目標地点のバラツキ）を与える
         this.offset = p5.Vector.random3D().mult(random(100, 400));
         if (isLeader) this.offset.mult(0);
+
+        this.followDelay = floor(random(0, 60));
     }
 
     // エラー修正：メソッドをクラス内に定義
@@ -35,9 +37,16 @@ class WireCross {
         score += 0.05;
     }
 
-    flock(agents, target) {
+    flock(agents, currentTarget, history) {
+        // Determine target position based on lag/history
+        let targetPos = currentTarget;
+        if (history && history.length > 0) {
+            let index = constrain(this.followDelay, 0, history.length - 1);
+            targetPos = history[index];
+        }
+
         // 目標地点をオフセットで散らす
-        let targetWithOffset = p5.Vector.add(target, this.offset);
+        let targetWithOffset = p5.Vector.add(targetPos, this.offset);
         let steer = p5.Vector.sub(targetWithOffset, this.pos);
         let d = steer.mag();
 
