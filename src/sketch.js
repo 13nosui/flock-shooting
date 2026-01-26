@@ -25,7 +25,7 @@ function setup() {
     updateBounds();
 
     osc = new p5.Oscillator('sine');
-    noiseOsc = new p5.Oscillator('sine');
+    noiseOsc = new p5.Noise('white');
     env = new p5.Envelope();
     env.setADSR(0.01, 0.1, 0, 0);
 
