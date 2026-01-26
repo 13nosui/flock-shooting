@@ -183,13 +183,13 @@ function handleInput() {
     // Dual-Stick Mouse/Touch Logic
     if (mouseIsPressed) {
         // Left Stick (Movement on X-Z Plane)
-        if (mouseX < width * 0.5) {
+        if (mouseX < width * 0.4) {
             let stickCenterX = width * 0.15;
             let stickCenterY = height - 100;
             let dx = mouseX - stickCenterX;
             let dy = mouseY - stickCenterY;
             let d = dist(mouseX, mouseY, stickCenterX, stickCenterY);
-            let maxR = 60;
+            let maxR = 80;
             if (d > 5) {
                 let r = min(d, maxR);
                 let angle = atan2(dy, dx);
@@ -198,12 +198,12 @@ function handleInput() {
             }
         }
         // Right Slider (Altitude on Y Axis)
-        if (mouseX > width * 0.5) {
+        if (mouseX > width * 0.6) {
             let sliderCenterX = width * 0.85;
             let sliderCenterY = height - 100;
             let dy = mouseY - sliderCenterY;
             if (abs(dy) > 10) {
-                wind.y = map(constrain(dy, -60, 60), -60, 60, -power, power);
+                wind.y = map(constrain(dy, -80, 80), -80, 80, -power, power);
             }
         }
     }
@@ -243,16 +243,16 @@ function drawUI() {
     // Left Stick (X-Z Plane)
     let stickX = -width * 0.35;
     let stickY = height * 0.35;
-    ellipse(stickX, stickY, 120, 120);
+    ellipse(stickX, stickY, 160, 160);
 
     // Stick Handle
     let handleX = stickX;
     let handleY = stickY;
-    if (mouseIsPressed && mouseX < width * 0.5) {
+    if (mouseIsPressed && mouseX < width * 0.4) {
         let dx = mouseX - width * 0.15;
         let dy = mouseY - (height - 100);
         let d = dist(0, 0, dx, dy);
-        let r = min(d, 60);
+        let r = min(d, 80);
         let angle = atan2(dy, dx);
         handleX += cos(angle) * r;
         handleY += sin(angle) * r;
@@ -271,12 +271,12 @@ function drawUI() {
     let sliderX = width * 0.35;
     let sliderY = height * 0.35;
     noFill(); stroke(col, 150);
-    rect(sliderX - 20, sliderY - 60, 40, 120, 10);
+    rect(sliderX - 20, sliderY - 80, 40, 160, 10);
 
     // Slider Handle
     let shY = sliderY;
-    if (mouseIsPressed && mouseX > width * 0.5) {
-        shY = sliderY + constrain(mouseY - (height - 100), -60, 60);
+    if (mouseIsPressed && mouseX > width * 0.6) {
+        shY = sliderY + constrain(mouseY - (height - 100), -80, 80);
     }
     fill(col, 150);
     rect(sliderX - 25, shY - 10, 50, 20, 5);
@@ -326,7 +326,12 @@ function mousePressed() {
     } else if (gameState === "GAMEOVER") {
         resetGame();
     } else {
-        fire();
+        // UI Aware Firing: Only fire if outside control zones
+        let inLeftStick = mouseX < width * 0.4;
+        let inRightSlider = mouseX > width * 0.6;
+        if (!inLeftStick && !inRightSlider) {
+            fire();
+        }
     }
 }
 function keyPressed() {
