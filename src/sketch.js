@@ -16,6 +16,7 @@ let curCamX = 0;
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
 let osc, noiseOsc, env, shotEnv;
+let wheelForceY = 0;
 
 function preload() {
     myFont = loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf');
@@ -161,6 +162,12 @@ function handleInput() {
     }
 
     if (leader && leader.applyForce) {
+        // Apply wheel force
+        wind.y += wheelForceY;
+        // Decay the wheel force (friction)
+        wheelForceY *= 0.9;
+        if (abs(wheelForceY) < 0.1) wheelForceY = 0;
+
         leader.applyForce(wind);
     }
 
@@ -306,4 +313,11 @@ function fire() {
             bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, v, false));
         }
     }
+}
+
+function mouseWheel(event) {
+    // event.delta > 0 means scroll down -> Move Down (Positive Y)
+    // event.delta < 0 means scroll up -> Move Up (Negative Y)
+    wheelForceY += event.delta * 0.5;
+    return false; // Prevent default browser scrolling
 }
