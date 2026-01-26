@@ -21,16 +21,15 @@ class FloatingText {
         push();
         translate(this.pos.x, this.pos.y, this.pos.z);
 
-        // 1. Face the Camera (Billboarding-ish)
-        // The camera is high up (Y=-1200) looking down.
-        // Rotate X backwards to make text stand up towards the screen.
+        // 1. Face the Camera
         rotateX(-PI / 3);
 
-        // 2. Render Settings
-        noStroke();
+        // 2. Render Settings (High Contrast)
+        stroke(0);
+        strokeWeight(4);
         fill(red(this.col), green(this.col), blue(this.col), map(this.life, 0, this.maxLife, 0, 255));
 
-        // 3. Ensure Font is Active
+        // 3. Ensure Font
         if (typeof myFont !== 'undefined') {
             textFont(myFont);
         }
@@ -38,10 +37,10 @@ class FloatingText {
         textAlign(CENTER, CENTER);
         textSize(this.size);
 
-        // 4. Force on top (Optional)
-        // drawingContext.disable(drawingContext.DEPTH_TEST);
+        // 4. Force on top
+        drawingContext.disable(drawingContext.DEPTH_TEST);
         text(this.txt, 0, 0);
-        // drawingContext.enable(drawingContext.DEPTH_TEST);
+        drawingContext.enable(drawingContext.DEPTH_TEST);
 
         pop();
     }

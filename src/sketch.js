@@ -555,12 +555,16 @@ function spawnExplosion(x, y, z) {
 }
 
 function spawnDamageText(x, y, z, damage) {
-    let size = random(20, 30);
-    let c = color(255, 255, 0); // Yellow for hits
-    if (damage > 1) { // Critical / High damage
-        size = 50;
+    // INCREASE SIZE: 100-150 is appropriate for world scale ~1000
+    let size = random(100, 150);
+    let c = color(255, 255, 0); // Yellow
+
+    if (damage > 1) {
+        size = 200; // Critical Hit -> Huge
         c = color(255, 50, 50); // Red
     }
+
+    // Ensure Y offset places it clearly above the enemy
     floatingTexts.push(new FloatingText(x, y, z, str(damage), size, c));
 }
 
