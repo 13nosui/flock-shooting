@@ -2,7 +2,7 @@ class Grid {
     constructor() {
         this.spacing = 100;
         this.scrollOffset = 0;
-        this.gridSize = 4000;
+        this.gridSize = max(width, height) * 6; // Make it huge and responsive
         this.yPos = 300;
     }
 

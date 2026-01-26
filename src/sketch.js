@@ -321,3 +321,9 @@ function mouseWheel(event) {
     wheelForceY += event.delta * 0.5;
     return false; // Prevent default browser scrolling
 }
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+    updateBounds();
+    grid = new Grid();
+}
