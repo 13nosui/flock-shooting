@@ -1,11 +1,11 @@
 class VoxelObstacle {
-    constructor() {
+    constructor(difficulty = 1.0) {
         this.pos = createVector(random(-boundsX, boundsX), random(-boundsY, boundsY), -3000);
         this.size = random(180, 350);
-        this.speed = 22;
+        this.speed = 22 * difficulty;
         this.active = true;
         this.isHit = false;
-        this.maxHp = 5;
+        this.maxHp = 5 + floor((difficulty - 1) * 5);
         this.hp = this.maxHp;
         this.shakeTimer = 0;
     }
