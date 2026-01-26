@@ -1,7 +1,7 @@
 
 
 let particles = [];
-const NUM_PARTICLES = 300;
+const NUM_PARTICLES = 3;
 let obstacles = [];
 let leader;
 let myFont;
