@@ -656,12 +656,20 @@ function keyPressed() {
     } else if (gameState === "GAMEOVER") {
         resetGame();
     } else if (gameState === "PLAY") {
+
         // --- DEBUG: Press 'B' to spawn Boss ---
         if (key === 'b' || key === 'B') {
             if (!boss) {
                 console.log("Debug: Spawning Boss...");
                 boss = new Boss();
                 isBossActive = true;
+                // Clear midboss if exists to avoid overlap
+                if (midBoss) {
+                    midBoss = null;
+                    midBossDefeated = true;
+                    if (midBossBgmOsc) midBossBgmOsc.amp(0);
+                }
+                obstacles = [];
             }
         }
 
@@ -670,11 +678,23 @@ function keyPressed() {
             if (!midBoss && !boss) {
                 console.log("Debug: Spawning Mid-Boss...");
                 midBoss = new MidBoss();
-                midBossDefeated = false; // Reset defeat flag so it stays active
-                obstacles = []; // Clear small enemies
+                midBossDefeated = false;
+                obstacles = [];
             }
         }
-        // ------------------------------------------
+
+        // --- DEBUG: Press 'P' to Max Power ---
+        if (key === 'p' || key === 'P') {
+            console.log("Debug: Max Power!");
+            weaponMode = 'LASER';
+            weaponTimer = 3000; // ~50 seconds
+            growFlock(30); // Add 30 drones
+            score += 1000; // Boost score for difficulty ramp
+            if (typeof itemEnv !== 'undefined' && typeof osc !== 'undefined') {
+                itemEnv.play(osc);
+                osc.freq(880);
+            }
+        }
     }
 }
 
