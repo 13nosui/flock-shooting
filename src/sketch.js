@@ -268,7 +268,7 @@ function draw() {
         if (leader && eb.active) {
             let d = dist(eb.pos.x, eb.pos.y, eb.pos.z, leader.pos.x, leader.pos.y, leader.pos.z);
             if (d < 30) {
-                damageFlock(1);
+                damageFlock(5);
                 eb.active = false;
                 addScreenShake(10);
             }
@@ -312,7 +312,7 @@ function draw() {
         let d = dist(obstacles[i].pos.x, obstacles[i].pos.y, obstacles[i].pos.z, leader.pos.x, leader.pos.y, leader.pos.z);
         if (obstacles[i].active && !obstacles[i].isHit && d < obstacles[i].size / 2 + 30) {
             obstacles[i].isHit = true;
-            damageFlock(5);
+            damageFlock(20);
             obstacles[i].active = false;
         }
 
