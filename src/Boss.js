@@ -34,6 +34,9 @@ class Boss {
             this.pos.z += 5;
         }
 
+        // Ensure Y is locked
+        this.pos.y = 0;
+
         this.angle += 0.02;
 
         this.fireTimer++;

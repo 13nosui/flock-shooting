@@ -119,12 +119,6 @@ function isTouchingUI() {
     let stickX = width * 0.15;
     let stickY = height - 100;
     if (dist(mouseX, mouseY, stickX, stickY) < 100) return true;
-
-    // Right Slider Zone
-    let sliderX = width * 0.85;
-    let sliderY = height - 100;
-    if (abs(mouseX - sliderX) < 40 && abs(mouseY - sliderY) < 100) return true;
-
     return false;
 }
 
@@ -411,49 +405,30 @@ function handleInput() {
     let wind = createVector(0, 0, 0);
     let power = 5.0;
 
-    // Keyboard Fallback (WASD + QE/ShiftSpace)
-    if (keyIsDown(65) || keyIsDown(LEFT_ARROW)) wind.x = -power; // A
-    if (keyIsDown(68) || keyIsDown(RIGHT_ARROW)) wind.x = power;  // D
-    if (keyIsDown(87) || keyIsDown(UP_ARROW)) wind.z = -power; // W (Forward = -Z)
-    if (keyIsDown(83) || keyIsDown(DOWN_ARROW)) wind.z = power;  // S (Backward = +Z)
-    if (keyIsDown(81) || keyIsDown(SHIFT)) wind.y = -power; // Q (Ascend = -Y)
-    if (keyIsDown(69) || keyIsDown(32)) wind.y = power;  // E (Descend = +Y)
+    // Keyboard (X-Z plane only)
+    if (keyIsDown(65) || keyIsDown(LEFT_ARROW)) wind.x = -power;
+    if (keyIsDown(68) || keyIsDown(RIGHT_ARROW)) wind.x = power;
+    if (keyIsDown(87) || keyIsDown(UP_ARROW)) wind.z = -power;
+    if (keyIsDown(83) || keyIsDown(DOWN_ARROW)) wind.z = power;
 
-    // Dual-Stick Mouse/Touch Logic
-    if (mouseIsPressed) {
-        // Left Stick (Movement on X-Z Plane)
-        if (mouseX < width * 0.4) {
-            let stickCenterX = width * 0.15;
-            let stickCenterY = height - 100;
-            let dx = mouseX - stickCenterX;
-            let dy = mouseY - stickCenterY;
-            let d = dist(mouseX, mouseY, stickCenterX, stickCenterY);
-            let maxR = 80;
-            if (d > 5) {
-                let r = min(d, maxR);
-                let angle = atan2(dy, dx);
-                wind.x = map(r * cos(angle), -maxR, maxR, -power, power);
-                wind.z = map(r * sin(angle), -maxR, maxR, -power, power);
-            }
-        }
-        // Right Slider (Altitude on Y Axis)
-        if (mouseX > width * 0.6) {
-            let sliderCenterX = width * 0.85;
-            let sliderCenterY = height - 100;
-            let dy = mouseY - sliderCenterY;
-            if (abs(dy) > 10) {
-                wind.y = map(constrain(dy, -80, 80), -80, 80, -power, power);
-            }
+    // Mouse Stick (Wide area for movement)
+    if (mouseIsPressed && mouseX < width * 0.8) {
+        let stickCenterX = width * 0.15;
+        let stickCenterY = height - 100;
+        let dx = mouseX - stickCenterX;
+        let dy = mouseY - stickCenterY;
+        let d = dist(mouseX, mouseY, stickCenterX, stickCenterY);
+        let maxR = 80;
+
+        if (d > 5) {
+            let r = min(d, maxR);
+            let angle = atan2(dy, dx);
+            wind.x = map(r * cos(angle), -maxR, maxR, -power, power);
+            wind.z = map(r * sin(angle), -maxR, maxR, -power, power);
         }
     }
 
     if (leader && leader.applyForce) {
-        // Apply wheel force
-        wind.y += wheelForceY;
-        // Decay the wheel force (friction)
-        wheelForceY *= 0.9;
-        if (abs(wheelForceY) < 0.1) wheelForceY = 0;
-
         leader.applyForce(wind);
     }
 
@@ -464,9 +439,9 @@ function handleInput() {
         osc.amp(0, 0.2);
     }
 
-    // Auto-Fire Logic
+    // Auto Fire
     if (gameState === "PLAY") {
-        if ((mouseIsPressed && !isTouchingUI()) || keyIsDown(32)) {
+        if (mouseIsPressed || keyIsDown(32)) {
             let currentTime = millis();
             if (currentTime - lastShotTime > SHOT_COOLDOWN) {
                 fire();
@@ -491,17 +466,16 @@ function drawUI() {
     stroke(col, 150);
     noFill();
 
-    // Left Stick (X-Z Plane)
-    let stickX = -width * 0.35;
-    let stickY = height * 0.35;
+    // Left Stick (Movement)
+    let stickX = width * 0.15;
+    let stickY = height - 100;
     ellipse(stickX, stickY, 160, 160);
 
-    // Stick Handle
     let handleX = stickX;
     let handleY = stickY;
-    if (mouseIsPressed && mouseX < width * 0.4) {
-        let dx = mouseX - width * 0.15;
-        let dy = mouseY - (height - 100);
+    if (mouseIsPressed && mouseX < width * 0.8) {
+        let dx = mouseX - stickX;
+        let dy = mouseY - stickY;
         let d = dist(0, 0, dx, dy);
         let r = min(d, 80);
         let angle = atan2(dy, dx);
@@ -510,32 +484,9 @@ function drawUI() {
     }
     ellipse(handleX, handleY, 40, 40);
 
-    textAlign(CENTER, CENTER);
-    textSize(10); fill(col, 150); noStroke();
-    text("MOVE", stickX, stickY - 80);
-    text("FWD", stickX, stickY - 45);
-    text("BWD", stickX, stickY + 45);
-    text("L", stickX - 45, stickY);
+    textAlign(CENTER); textSize(10); fill(col, 150); noStroke();
+    text("MOVE", stickX, stickY - 90);
     text("R", stickX + 45, stickY);
-
-    // Right Slider (Y Altitude)
-    let sliderX = width * 0.35;
-    let sliderY = height * 0.35;
-    noFill(); stroke(col, 150);
-    rect(sliderX - 20, sliderY - 80, 40, 160, 10);
-
-    // Slider Handle
-    let shY = sliderY;
-    if (mouseIsPressed && mouseX > width * 0.6) {
-        shY = sliderY + constrain(mouseY - (height - 100), -80, 80);
-    }
-    fill(col, 150);
-    rect(sliderX - 25, shY - 10, 50, 20, 5);
-
-    noStroke();
-    text("ALTITUDE", sliderX, sliderY - 80);
-    text("UP", sliderX, sliderY - 40);
-    text("DOWN", sliderX, sliderY + 40);
 
     // Stats
     textAlign(LEFT); textSize(18);

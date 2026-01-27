@@ -13,9 +13,11 @@ class MidBoss {
         // Approach
         if (this.pos.z < this.targetZ) this.pos.z += 8;
 
-        // Hover Motion
+        // Hover Motion (X-axis only)
         this.pos.x = sin(frameCount * 0.02) * 300;
-        this.pos.y = cos(frameCount * 0.03) * 100 - 200;
+
+        // FIX: Lock Y-axis to 0
+        this.pos.y = 0;
 
         // Attack
         this.fireTimer++;
