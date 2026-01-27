@@ -671,12 +671,13 @@ function keyPressed() {
                 console.log("Debug: Spawning Boss...");
                 boss = new Boss();
                 isBossActive = true;
-                // Clear midboss if exists to avoid overlap
-                if (midBoss) {
-                    midBoss = null;
-                    midBossDefeated = true;
-                    if (midBossBgmOsc) midBossBgmOsc.amp(0);
-                }
+
+                // --- FIX: Prevent MidBoss from appearing ---
+                midBoss = null;
+                midBossDefeated = true; // Mark as "already defeated" so it doesn't spawn naturally
+                if (midBossBgmOsc) midBossBgmOsc.amp(0);
+                // -------------------------------------------
+
                 obstacles = [];
             }
         }
