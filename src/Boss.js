@@ -1,47 +1,31 @@
 class Boss {
     constructor() {
-        this.pos = createVector(0, 0, -4000);
-        this.targetZ = -1500;
-        this.coreSize = 600;
+        this.pos = createVector(0, 0, -5000); // Start further back
+        this.targetZ = -2000; // Stay somewhat distant
 
-        // --- BALANCE: Reduced HP for better pacing ---
-        this.coreHp = 100;
-        this.maxCoreHp = 100;
-        // ---------------------------------------------
+        // Combined HP (was 100 + 4*50 = 300)
+        this.coreHp = 300;
+        this.maxCoreHp = 300;
 
         this.active = true;
         this.fireTimer = 0;
-        this.angle = 0;
-
-        // --- NEW: Shake Timer ---
+        this.wingAngle = 0;
         this.shakeTimer = 0;
-
-        // 4 Rotating Shields
-        this.shields = [];
-        for (let i = 0; i < 4; i++) {
-            this.shields.push({
-                active: true,
-                hp: 50, // Increased to 50
-                offsetAngle: (TWO_PI / 4) * i,
-                size: 250,
-                dist: 700,
-                hitTimer: 0 // Track individual hit reaction
-            });
-        }
     }
 
     update() {
-        if (this.pos.z < this.targetZ) {
-            this.pos.z += 5;
-        }
+        // Approach
+        if (this.pos.z < this.targetZ) this.pos.z += 4;
 
-        // Ensure Y is locked
+        // Lock Y-axis
         this.pos.y = 0;
 
-        this.angle += 0.02;
+        // Wing Animation
+        this.wingAngle += 0.1;
 
+        // Attack Logic
         this.fireTimer++;
-        if (this.fireTimer > 100) {
+        if (this.fireTimer > 80) {
             this.fireRadialAttack();
             if (typeof enemyFireSound === 'function') enemyFireSound();
             this.fireTimer = 0;
@@ -49,170 +33,105 @@ class Boss {
     }
 
     fireRadialAttack() {
-        let count = 12;
+        let count = 16; // More bullets
         for (let i = 0; i < count; i++) {
-            let theta = (TWO_PI / count) * i + this.angle;
-            let v = createVector(sin(theta) * 10, cos(theta) * 10, 20);
-            v.setMag(24.5); // Force speed to user spec
+            let theta = (TWO_PI / count) * i + this.wingAngle * 0.5;
+            let v = createVector(sin(theta) * 15, cos(theta) * 15, 20); // Wider spread
+            v.setMag(25);
             if (typeof enemyBullets !== 'undefined') {
-                // FIX: Spawn bullets further ahead to prevent clipping (z + 600)
-                enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z + 600, v, 'ENEMY'));
+                enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z + 300, v, 'ENEMY'));
             }
         }
     }
 
     takeDamage(damage, impactPos) {
-        // 1. Check Shields
-        let anyShieldActive = false;
-        for (let s of this.shields) {
-            if (!s.active) continue;
-            anyShieldActive = true;
+        // Simplified Collision: Single Large Sphere
+        // Overall size is roughly 1000x400x800
+        let d = dist(impactPos.x, impactPos.y, impactPos.z, this.pos.x, this.pos.y, this.pos.z);
+        if (d < 500) { // Hit radius
+            this.coreHp -= damage;
+            this.shakeTimer = 10;
 
-            let sx = this.pos.x + cos(this.angle + s.offsetAngle) * s.dist;
-            let sy = this.pos.y + sin(this.angle + s.offsetAngle) * s.dist;
-            let sz = this.pos.z;
-
-            let d = dist(impactPos.x, impactPos.y, impactPos.z, sx, sy, sz);
-            if (d < s.size / 2 + 50) {
-                s.hp -= damage;
-                s.hitTimer = 10; // Trigger shield reaction
-                this.shakeTimer = 10;
-
-                if (s.hp <= 0) {
-                    s.active = false;
-                    if (typeof spawnExplosion === 'function') {
-                        for (let k = 0; k < 5; k++) {
-                            spawnExplosion(
-                                sx + random(-50, 50),
-                                sy + random(-50, 50),
-                                sz + random(-50, 50)
-                            );
-                        }
-                    }
-                    if (typeof destroySound === 'function') destroySound();
-                } else {
-                    if (typeof hitSound === 'function') hitSound();
-                }
-                return 'SHIELD';
+            if (this.coreHp <= 0) {
+                this.active = false;
+                return 'DESTROYED';
             }
+            if (typeof hitSound === 'function') hitSound();
+            return 'CORE';
         }
-
-        // 2. Check Core
-        // ONLY Vulnerable if all shields are destroyed
-        if (!anyShieldActive) {
-            let d = dist(impactPos.x, impactPos.y, impactPos.z, this.pos.x, this.pos.y, this.pos.z);
-            if (d < this.coreSize / 2 + 50) {
-                this.coreHp -= damage;
-                this.shakeTimer = 10;
-
-                if (this.coreHp <= 0) {
-                    this.active = false;
-                    return 'DESTROYED';
-                }
-                if (typeof hitSound === 'function') hitSound();
-                return 'CORE';
-            }
-        } else {
-            // Check if bullet "hits" core area but is blocked by invulnerability
-            let d = dist(impactPos.x, impactPos.y, impactPos.z, this.pos.x, this.pos.y, this.pos.z);
-            if (d < this.coreSize / 2 + 50) {
-                // Add a visual or sound cue for blocked damage?
-                if (typeof hitSound === 'function') hitSound(); // Still play hit sound to show contact
-                return 'CORE_INVULNERABLE';
-            }
-        }
-
         return 'MISS';
     }
 
     display() {
         push();
-
         // --- APPLY SHAKE ---
         let shakeX = 0, shakeY = 0, shakeZ = 0;
         if (this.shakeTimer > 0) {
-            let mag = 20; // Shake magnitude
-            shakeX = random(-mag, mag);
-            shakeY = random(-mag, mag);
-            shakeZ = random(-mag, mag);
+            shakeX = random(-25, 25); shakeY = random(-25, 25); shakeZ = random(-25, 25);
             this.shakeTimer--;
+            stroke(255, 50, 50); // Red flash
+            strokeWeight(4);
+        } else {
+            stroke(150, 0, 50); // Dark chitin color
+            strokeWeight(3);
         }
         translate(this.pos.x + shakeX, this.pos.y + shakeY, this.pos.z + shakeZ);
-        // -------------------
-
-        // Draw Core
         noFill();
-        strokeWeight(4);
-        // Flash color on hit
-        if (this.shakeTimer > 0) stroke(255, 255, 0); // Yellow flash
-        else stroke(255, 0, 0);
 
+        // --- GIANT INSECT MODEL ---
+
+        // Main Body (Thorax & Abdomen)
         push();
-        rotateY(this.angle * 0.5);
-        box(this.coreSize);
+        scale(3); // Scale up MidBoss-like structure
+
+        // Thorax
+        box(120, 80, 150);
+
+        // Head (with mandibles)
+        push();
+        translate(0, -40, 120);
+        box(80, 60, 60);
+        // Mandibles
+        push(); translate(-50, 10, 40); rotateY(-0.3); box(30, 20, 60); pop();
+        push(); translate(50, 10, 40); rotateY(0.3); box(30, 20, 60); pop();
         pop();
 
-        // Inner Core (Glowing)
-        if (this.shakeTimer > 0) fill(255, 200, 0, 200);
-        else fill(255, 0, 0, 100);
-
-        box(this.coreSize * 0.3 + sin(frameCount * 0.1) * 50);
-
-        // Draw Shields
-        for (let s of this.shields) {
-            if (!s.active) continue;
-            push();
-            rotateZ(this.angle + s.offsetAngle);
-
-            // --- NEW: Shield Specific Shake ---
-            let sShakeX = 0, sShakeY = 0;
-            if (s.hitTimer > 0) {
-                sShakeX = random(-15, 15);
-                sShakeY = random(-15, 15);
-                s.hitTimer--;
-            }
-            translate(s.dist + sShakeX, sShakeY, 0);
-            // -----------------------------------
-
-            rotateX(this.angle * 2);
-            rotateY(this.angle);
-
-            stroke(0, 255, 255);
-            strokeWeight(3);
-
-            // --- UPDATED: Shield Color on Hit ---
-            if (s.hitTimer > 0) {
-                fill(255, 50, 50, 200); // Flash RED
-            } else {
-                fill(0, 50, 200, 30); // Normal Blue
-            }
-
-            box(s.size);
-            pop();
-        }
-
-        // --- NEW: HP BAR ---
+        // Abdomen (Tail)
         push();
-        translate(0, -this.coreSize / 2 - 120, 0); // Position above core
-        rotateY(-this.angle * 0.5); // Counter-rotate to face camera roughly
+        translate(0, 20, -150);
+        rotateX(-0.1);
+        box(100, 80, 180);
+        pop();
 
-        noStroke();
-        fill(50);
-        rect(-150, -15, 300, 30); // Background
+        // Giant Wings
+        let flap = sin(this.wingAngle) * 0.3;
+        fill(150, 0, 50, 50); // Semi-transparent dark wings
 
+        // Left Wing
+        push();
+        translate(-70, -50, 20); rotateZ(-flap + 0.2);
+        box(250, 10, 400);
+        pop();
+
+        // Right Wing
+        push();
+        translate(70, -50, 20); rotateZ(flap - 0.2);
+        box(250, 10, 400);
+        pop();
+
+        pop(); // End scale
+
+        // --- HP BAR ---
+        push();
+        translate(0, -500, 0); // Position high above
+        rotateY(PI); // Face camera (assuming camera is at Z > 0 looking at Z < 0)
+        noStroke(); fill(50); rect(-200, -20, 400, 40); // BG
         fill(255, 50, 50);
-        // FIX: Ensure width is never negative
-        let hpW = map(this.coreHp, 0, this.maxCoreHp, 0, 300);
+        let hpW = map(this.coreHp, 0, this.maxCoreHp, 0, 400);
         hpW = max(0, hpW); // Constrain to 0 minimum
-
-        rect(-150, -15, hpW, 30); // HP Bar
-
-        stroke(255);
-        strokeWeight(2);
-        noFill();
-        rect(-150, -15, 300, 30); // Frame
+        rect(-200, -20, hpW, 40); // HP
+        stroke(255); noFill(); rect(-200, -20, 400, 40); // Frame
         pop();
-        // -------------------
 
         pop();
     }
