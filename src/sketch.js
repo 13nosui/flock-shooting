@@ -38,9 +38,7 @@ let floatingTexts = [];
 let shakeDecay = 0.9;
 let glitchIntensity = 0;
 
-function preload() {
-    myFont = loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf');
-}
+
 
 function setup() {
     setAttributes('antialias', false);
@@ -75,7 +73,18 @@ function setup() {
     }
     grid = new Grid();
     curCamX = 0;
-    if (myFont) initTitleParticles();
+
+    // --- ASYNC FONT LOADING ---
+    loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf',
+        (font) => {
+            console.log("Font loaded successfully");
+            myFont = font;
+            initTitleParticles();
+        },
+        () => {
+            console.warn("Font loading failed, using fallback.");
+        }
+    );
 }
 
 function updateBounds() {
@@ -430,7 +439,8 @@ function drawUI() {
     camera(0, 0, 500, 0, 0, 0, 0, 1, 0);
     ortho(-width / 2, width / 2, -height / 2, height / 2, 0, 1000);
     drawingContext.disable(drawingContext.DEPTH_TEST);
-    textFont(myFont);
+
+    if (myFont) textFont(myFont); else textFont('Courier New');
 
     let col = isInverted ? 0 : 255;
     stroke(col, 150);
@@ -567,15 +577,24 @@ function drawStartScreen() {
 
     background(0);
 
-    // Update and display particles
-    for (let p of titleParticles) {
-        p.behaviors();
-        p.update();
-        p.display();
+    // Render Particles if ready
+    if (titleParticles.length > 0) {
+        for (let p of titleParticles) {
+            p.behaviors();
+            p.update();
+            p.display();
+        }
+    } else {
+        // FALLBACK: Static Text
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(60);
+        if (myFont) textFont(myFont); else textFont('Courier New');
+        text("Flock Shooting", 0, 0);
     }
 
-    // Subtext (Static)
-    textFont(myFont);
+    // Subtext
+    if (myFont) textFont(myFont); else textFont('Courier New');
     textAlign(CENTER, CENTER);
     fill(150);
     textSize(18);
