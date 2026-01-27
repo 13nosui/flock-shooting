@@ -203,22 +203,33 @@ function draw() {
         }
 
         // Bullet Collision with Mid-Boss
-        for (let b of bullets) {
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            let b = bullets[i];
             if (!b.active) continue;
+
             let d = dist(b.pos.x, b.pos.y, b.pos.z, midBoss.pos.x, midBoss.pos.y, midBoss.pos.z);
-            if (d < 100) {
+            if (d < 150) { // Increased hit radius
                 if (midBoss.takeDamage(1)) {
-                    // Defeated
+                    // --- MID BOSS DEFEATED ---
                     spawnExplosion(midBoss.pos.x, midBoss.pos.y, midBoss.pos.z);
-                    addScreenShake(30);
-                    score += 500;
-                    midBoss = null;
+                    addScreenShake(50); // Big shake
+                    score += 1500; // Big score
                     midBossDefeated = true;
-                    midBossBgmOsc.amp(0); // Stop sound
+
+                    // Stop BGM immediately
+                    if (midBossBgmOsc) midBossBgmOsc.amp(0);
+
+                    // DESTROY OBJECT
+                    midBoss = null;
+
+                    // Force break to prevent further processing of this boss instance
+                    break;
                 } else {
-                    spawnDamageText(b.pos.x, b.pos.y - 50, b.pos.z, 1);
+                    // Just a hit
+                    spawnDamageText(b.pos.x, b.pos.y - 100, b.pos.z, 1);
                     if (typeof hitSound === 'function') hitSound();
                 }
+
                 if (!b.penetrate) b.active = false;
             }
         }
