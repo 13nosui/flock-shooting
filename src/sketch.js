@@ -39,8 +39,9 @@ let shakeMagnitude = 0;
 let shakeDecay = 0.9;
 let glitchIntensity = 0;
 
-
-
+function preload() {
+    myFont = loadFont('assets/RobotoMono-VariableFont_wght.ttf');
+}
 function setup() {
     setAttributes('antialias', false);
     createCanvas(windowWidth, windowHeight, WEBGL);
@@ -75,15 +76,7 @@ function setup() {
     grid = new Grid();
     curCamX = 0;
 
-    // --- FIX 3: Async Font Loading ---
-    loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf',
-        (font) => {
-            console.log("Font loaded!");
-            myFont = font;
-            initTitleParticles();
-        },
-        () => console.warn("Font failed to load, using fallback.")
-    );
+    if (myFont) initTitleParticles();
 }
 
 function updateBounds() {
