@@ -25,6 +25,8 @@ let joystickActive = false;
 let joyStartX = 0;
 let joyStartY = 0;
 let bossSpawnDelay = 0;
+let totalDistance = 0;
+
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
 let osc, noiseOsc, env, shotEnv, itemEnv, sawOsc;
@@ -190,11 +192,7 @@ function draw() {
     }
     // --------------------
 
-    // --- MID BOSS SPAWN ---
-    if (!midBoss && !midBossDefeated && score > 250) {
-        midBoss = new MidBoss();
-        obstacles = []; // Clear normal enemies
-    }
+
 
     // --- GRID CONTROL ---
     let gridShake = 0;
@@ -257,19 +255,29 @@ function draw() {
 
     // Sync grid speed with leader's forward velocity
     let forwardSpeed = 15 - leader.vel.z;
+    totalDistance += forwardSpeed;
+
     grid.update(forwardSpeed);
     grid.display(gridShake, gridWave); // Pass both params
+
+    // --- MID BOSS SPAWN ---
+    // UPDATED: Spawn based on distance (approx 6000 units) instead of score
+    if (!midBoss && !midBossDefeated && totalDistance > 6000) {
+        midBoss = new MidBoss();
+        obstacles = []; // Clear normal enemies
+    }
+
 
     // --- BOSS SPAWN LOGIC ---
     // Spawn Boss ONLY if MidBoss is defeated
     if (midBossDefeated && !boss && !bossDefeated) {
         bossSpawnDelay++;
-        
+
         // Wait ~3 seconds after MidBoss death before Boss appears
         if (bossSpawnDelay > 180) {
             boss = new Boss();
-            isBossActive = true; 
-            bossSpawnDelay = 0; 
+            isBossActive = true;
+            bossSpawnDelay = 0;
         }
     }
     if (boss) {
@@ -785,6 +793,8 @@ function resetGame() {
     midBossDefeated = false;
     bossDefeated = false;
     bossSpawnDelay = 0;
+    totalDistance = 0;
+
     if (midBossBgmOsc) midBossBgmOsc.amp(0);
     setup();
     gameState = "PLAY";
