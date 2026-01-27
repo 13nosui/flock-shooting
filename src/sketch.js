@@ -438,6 +438,10 @@ function handleInput() {
     }
 
     if (leader && leader.applyForce) {
+        // --- FIX: FORCE LOCK Y-AXIS ---
+        leader.pos.y = 0;
+        leader.vel.y = 0;
+        // ------------------------------
         leader.applyForce(wind);
     }
 
