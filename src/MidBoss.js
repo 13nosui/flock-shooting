@@ -7,6 +7,9 @@ class MidBoss {
         this.active = true;
         this.fireTimer = 0;
         this.wingAngle = 0;
+
+        // --- NEW: Flash Timer for Hit Reaction ---
+        this.flashTimer = 0;
     }
 
     update() {
@@ -51,6 +54,10 @@ class MidBoss {
 
     takeDamage(amount) {
         this.hp -= amount;
+
+        // --- NEW: Trigger Flash ---
+        this.flashTimer = 3;
+
         if (this.hp <= 0) {
             this.active = false;
             return true;
@@ -62,9 +69,16 @@ class MidBoss {
         push();
         translate(this.pos.x, this.pos.y, this.pos.z);
 
-        // --- INSECT DESIGN ---
-        stroke(100, 255, 100); // Toxic Green
-        strokeWeight(2);
+        // --- INSECT DESIGN & HIT REACTION ---
+        if (this.flashTimer > 0) {
+            stroke(255);       // White Flash
+            strokeWeight(4);   // Thicker lines
+            this.flashTimer--;
+        } else {
+            stroke(100, 255, 100); // Normal Toxic Green
+            strokeWeight(2);
+        }
+
         noFill();
 
         // Head
