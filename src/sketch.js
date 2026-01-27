@@ -20,6 +20,9 @@ let curCamX = 0;
 let titleParticles = [];
 let midBoss = null;
 let midBossDefeated = false;
+let joystickActive = false;
+let joyStartX = 0;
+let joyStartY = 0;
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
 let osc, noiseOsc, env, shotEnv, itemEnv, sawOsc;
@@ -411,13 +414,17 @@ function handleInput() {
     if (keyIsDown(87) || keyIsDown(UP_ARROW)) wind.z = -power;
     if (keyIsDown(83) || keyIsDown(DOWN_ARROW)) wind.z = power;
 
-    // Mouse Stick (Wide area for movement)
-    if (mouseIsPressed && mouseX < width * 0.8) {
-        let stickCenterX = width * 0.15;
-        let stickCenterY = height - 100;
-        let dx = mouseX - stickCenterX;
-        let dy = mouseY - stickCenterY;
-        let d = dist(mouseX, mouseY, stickCenterX, stickCenterY);
+    // Dynamic Joystick Logic
+    if (mouseIsPressed) {
+        if (!joystickActive) {
+            joystickActive = true;
+            joyStartX = mouseX;
+            joyStartY = mouseY;
+        }
+
+        let dx = mouseX - joyStartX;
+        let dy = mouseY - joyStartY;
+        let d = dist(mouseX, mouseY, joyStartX, joyStartY);
         let maxR = 80;
 
         if (d > 5) {
@@ -426,6 +433,8 @@ function handleInput() {
             wind.x = map(r * cos(angle), -maxR, maxR, -power, power);
             wind.z = map(r * sin(angle), -maxR, maxR, -power, power);
         }
+    } else {
+        joystickActive = false;
     }
 
     if (leader && leader.applyForce) {
@@ -466,27 +475,45 @@ function drawUI() {
     stroke(col, 150);
     noFill();
 
-    // Left Stick (Movement)
-    let stickX = width * 0.15;
-    let stickY = height - 100;
-    ellipse(stickX, stickY, 160, 160);
+    // Joystick Position Logic
+    let drawBaseX, drawBaseY;
 
-    let handleX = stickX;
-    let handleY = stickY;
-    if (mouseIsPressed && mouseX < width * 0.8) {
-        let dx = mouseX - stickX;
-        let dy = mouseY - stickY;
+    if (joystickActive) {
+        // Active: Draw at touch point (converted to ortho center-relative)
+        drawBaseX = joyStartX - width / 2;
+        drawBaseY = joyStartY - height / 2;
+        stroke(col, 200); // Brighter when active
+    } else {
+        // Inactive: Draw at default position (Left side)
+        drawBaseX = -width * 0.35;
+        drawBaseY = height * 0.35;
+        stroke(col, 50); // Dim when inactive
+    }
+
+    // Draw Base
+    ellipse(drawBaseX, drawBaseY, 160, 160);
+
+    // Draw Handle
+    let handleX = drawBaseX;
+    let handleY = drawBaseY;
+
+    if (joystickActive) {
+        let dx = (mouseX - width / 2) - drawBaseX;
+        let dy = (mouseY - height / 2) - drawBaseY;
         let d = dist(0, 0, dx, dy);
         let r = min(d, 80);
         let angle = atan2(dy, dx);
         handleX += cos(angle) * r;
         handleY += sin(angle) * r;
+        fill(col, 200);
+    } else {
+        fill(col, 50);
     }
     ellipse(handleX, handleY, 40, 40);
 
-    textAlign(CENTER); textSize(10); fill(col, 150); noStroke();
-    text("MOVE", stickX, stickY - 90);
-    text("R", stickX + 45, stickY);
+    textAlign(CENTER, CENTER);
+    textSize(10); fill(col, 150); noStroke();
+    text("MOVE", drawBaseX, drawBaseY - 90);
 
     // Stats
     textAlign(LEFT); textSize(18);
