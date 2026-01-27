@@ -2,8 +2,8 @@ class MidBoss {
     constructor() {
         this.pos = createVector(0, 0, -4000);
         this.targetZ = -1200;
-        this.hp = 150;
-        this.maxHp = 150;
+        this.hp = 70;
+        this.maxHp = 70;
         this.active = true;
         this.fireTimer = 0;
         this.wingAngle = 0;
