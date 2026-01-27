@@ -81,11 +81,13 @@ class VoxelObstacle {
                             enemyBullets.push(new Bullet(this.pos.x, this.pos.y, spawnZ, finalDir, 'ENEMY'));
                         }
                     }
+                    if (typeof enemyFireSound === 'function') enemyFireSound();
                 } else {
                     // --- NORMAL / INTERCEPTOR: Single Shot ---
                     dir.setMag(bulletSpeed);
                     if (typeof enemyBullets !== 'undefined') {
                         enemyBullets.push(new Bullet(this.pos.x, this.pos.y, spawnZ, dir, 'ENEMY'));
+                        if (typeof enemyFireSound === 'function') enemyFireSound();
                     }
                 }
 
@@ -106,8 +108,10 @@ class VoxelObstacle {
         this.shakeTimer = 20; // Longer shake
         if (this.hp <= 0) {
             this.active = false;
+            if (typeof destroySound === 'function') destroySound();
             return true; // Destroyed
         }
+        if (typeof hitSound === 'function') hitSound();
         return false;
     }
 

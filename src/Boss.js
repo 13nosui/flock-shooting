@@ -39,6 +39,7 @@ class Boss {
         this.fireTimer++;
         if (this.fireTimer > 100) {
             this.fireRadialAttack();
+            if (typeof enemyFireSound === 'function') enemyFireSound();
             this.fireTimer = 0;
         }
     }
@@ -74,6 +75,9 @@ class Boss {
                 if (s.hp <= 0) {
                     s.active = false;
                     if (typeof spawnExplosion === 'function') spawnExplosion(sx, sy, sz);
+                    if (typeof destroySound === 'function') destroySound();
+                } else {
+                    if (typeof hitSound === 'function') hitSound();
                 }
                 return 'SHIELD';
             }

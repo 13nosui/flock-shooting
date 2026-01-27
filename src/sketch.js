@@ -20,7 +20,7 @@ let curCamX = 0;
 let titleParticles = [];
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
-let osc, noiseOsc, env, shotEnv, itemEnv;
+let osc, noiseOsc, env, shotEnv, itemEnv, sawOsc;
 let wheelForceY = 0;
 let leaderHistory = [];
 const MAX_HISTORY = 100;
@@ -35,8 +35,8 @@ let enemiesDefeated = 0;
 let totalDamageDealt = 0;
 let totalBulletsFired = 0;
 let floatingTexts = [];
-let shakeMagnitude = 0;
 let shakeDecay = 0.9;
+let glitchIntensity = 0;
 
 function preload() {
     myFont = loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf');
@@ -64,6 +64,10 @@ function setup() {
     osc.amp(0);
     osc.start();
 
+    sawOsc = new p5.Oscillator('sawtooth');
+    sawOsc.amp(0);
+    sawOsc.start();
+
     for (let i = 0; i < NUM_PARTICLES; i++) {
         let p = new WireCross(i === 0);
         particles.push(p);
@@ -82,8 +86,8 @@ function updateBounds() {
 
 function initTitleParticles() {
     titleParticles = [];
-    let txt = "THA_GUNTAI";
-    let fontSize = min(width / 10, 80);
+    let txt = "Flock Shooting";
+    let fontSize = min(width / 12, 60);
 
     // Calculate bounding box to center text
     let bounds = myFont.textBounds(txt, 0, 0, fontSize);
@@ -185,6 +189,7 @@ function draw() {
         if (!boss.active) {
             spawnExplosion(boss.pos.x, boss.pos.y, boss.pos.z);
             addScreenShake(50);
+            triggerGlitch(1.0);
             score += 1000;
             boss = null;
             isBossActive = false; // END EMERGENCY MODE
@@ -215,6 +220,7 @@ function draw() {
                 let isDestroyed = o.takeDamage(1);
                 totalDamageDealt++;
                 spawnDamageText(o.pos.x, o.pos.y - o.size / 2 - 50, o.pos.z, 1);
+                hitSound();
 
                 if (isDestroyed) {
                     // Death Logic
@@ -224,6 +230,7 @@ function draw() {
                     items.push(new Item(o.pos.x, o.pos.y, o.pos.z, dropType));
                     spawnExplosion(o.pos.x, o.pos.y, o.pos.z);
                     triggerHitEffect();
+                    destroySound();
                 }
 
                 if (!b.penetrate) {
@@ -238,6 +245,7 @@ function draw() {
             let hitResult = boss.takeDamage(1, bullets[i].pos);
             if (hitResult !== 'MISS') {
                 spawnDamageText(bullets[i].pos.x, bullets[i].pos.y - 100, bullets[i].pos.z, 1);
+                hitSound();
                 if (!bullets[i].penetrate) bullets[i].active = false;
 
                 if (hitResult === 'SHIELD') {
@@ -337,6 +345,11 @@ function draw() {
     if (weaponTimer > 0) {
         weaponTimer--;
         if (weaponTimer === 0) weaponMode = 'NORMAL';
+    }
+
+    if (glitchIntensity > 0) {
+        drawGlitch();
+        glitchIntensity -= 0.05;
     }
 }
 
@@ -495,7 +508,44 @@ function triggerHitEffect() {
     isInverted = !isInverted;
     env.play(noiseOsc);
     score = max(0, score - 10);
+    triggerGlitch(0.5);
     if (navigator.vibrate) navigator.vibrate(50);
+}
+
+function triggerGlitch(intensity) {
+    glitchIntensity = max(glitchIntensity, intensity);
+}
+
+function drawGlitch() {
+    push();
+    resetMatrix();
+    camera(0, 0, 500, 0, 0, 0, 0, 1, 0);
+    ortho(-width / 2, width / 2, -height / 2, height / 2, 0, 1000);
+    noStroke();
+
+    let count = floor(glitchIntensity * 20);
+    for (let i = 0; i < count; i++) {
+        let x = random(-width / 2, width / 2);
+        let y = random(-height / 2, height / 2);
+        let w = random(100, 400);
+        let h = random(2, 20);
+
+        // Glitch colors: Cyan, Magenta, White
+        let r = random();
+        if (r < 0.33) fill(0, 255, 255, 150);
+        else if (r < 0.66) fill(255, 0, 255, 150);
+        else fill(255, 255, 255, 180);
+
+        rect(x, y, w, h);
+    }
+
+    // Slight shift effect
+    if (random() < glitchIntensity) {
+        fill(255, 50);
+        rect(-width / 2, random(-height / 2, height / 2), width, 1);
+    }
+
+    pop();
 }
 
 function drawFlash() {
@@ -709,4 +759,23 @@ function spawnDamageText(x, y, z, damage) {
 
 function addScreenShake(amount) {
     shakeMagnitude = max(shakeMagnitude, amount);
+}
+
+function hitSound() {
+    shotEnv.setADSR(0.001, 0.05, 0, 0);
+    shotEnv.play(osc);
+    osc.freq(1200);
+}
+
+function destroySound() {
+    env.setADSR(0.01, 0.3, 0, 0);
+    env.play(noiseOsc);
+    osc.freq(60);
+    shotEnv.play(osc);
+}
+
+function enemyFireSound() {
+    shotEnv.setADSR(0.01, 0.1, 0, 0);
+    shotEnv.play(sawOsc);
+    sawOsc.freq(150);
 }
