@@ -24,7 +24,8 @@ class Boss {
                 hp: 50, // Increased to 50
                 offsetAngle: (TWO_PI / 4) * i,
                 size: 250,
-                dist: 700
+                dist: 700,
+                hitTimer: 0 // Track individual hit reaction
             });
         }
     }
@@ -74,6 +75,7 @@ class Boss {
             let d = dist(impactPos.x, impactPos.y, impactPos.z, sx, sy, sz);
             if (d < s.size / 2 + 50) {
                 s.hp -= damage;
+                s.hitTimer = 10; // Trigger shield reaction
                 this.shakeTimer = 10;
 
                 if (s.hp <= 0) {
@@ -161,16 +163,29 @@ class Boss {
             if (!s.active) continue;
             push();
             rotateZ(this.angle + s.offsetAngle);
-            translate(s.dist, 0, 0);
+
+            // --- NEW: Shield Specific Shake ---
+            let sShakeX = 0, sShakeY = 0;
+            if (s.hitTimer > 0) {
+                sShakeX = random(-15, 15);
+                sShakeY = random(-15, 15);
+                s.hitTimer--;
+            }
+            translate(s.dist + sShakeX, sShakeY, 0);
+            // -----------------------------------
+
             rotateX(this.angle * 2);
             rotateY(this.angle);
 
             stroke(0, 255, 255);
             strokeWeight(3);
 
-            // Flash shield on hit
-            if (this.shakeTimer > 0) fill(200, 255, 255, 100);
-            else fill(0, 50, 200, 30);
+            // --- UPDATED: Shield Color on Hit ---
+            if (s.hitTimer > 0) {
+                fill(255, 50, 50, 200); // Flash RED
+            } else {
+                fill(0, 50, 200, 30); // Normal Blue
+            }
 
             box(s.size);
             pop();
