@@ -195,11 +195,21 @@ function draw() {
         obstacles = []; // Clear normal enemies
     }
 
+    // --- GRID CONTROL ---
     let gridShake = 0;
+    let gridWave = 0;
+
+    if (isBossActive) {
+        gridShake = 20; // Violent shake
+        gridWave = 100; // Big wave motion
+    } else if (midBoss) {
+        gridShake = 5;  // Subtle shake
+        gridWave = 0;
+    }
+
     if (midBoss) {
         midBoss.update();
         midBoss.display();
-        gridShake = 5; // Electric jitter
 
         // BGM: Rhythmic Pulse
         if (frameCount % 30 === 0) {
@@ -247,7 +257,7 @@ function draw() {
     // Sync grid speed with leader's forward velocity
     let forwardSpeed = 15 - leader.vel.z;
     grid.update(forwardSpeed);
-    grid.display(gridShake); // Pass shake amount
+    grid.display(gridShake, gridWave); // Pass both params
 
     // Boss Loop
     if (!boss && !bossDefeated && score > 800) { // Delayed main boss until after mid boss
