@@ -174,12 +174,14 @@ function draw() {
     shakeMagnitude *= shakeDecay;
     if (shakeMagnitude < 0.1) shakeMagnitude = 0;
 
-    // Apply to camera position
-    let finalCamX = curCamX + shakeX;
-    let finalCamY = -1200 + shakeY;
-    let finalCamZ = leader.pos.z + 800 + shakeZ;
-
-    camera(finalCamX, finalCamY, finalCamZ, lookX, lookY, lookZ, 0, 1, 0);
+    // --- SAFETY CHECK ---
+    if (!isNaN(finalCamX) && !isNaN(finalCamY) && !isNaN(finalCamZ) &&
+        !isNaN(lookX) && !isNaN(lookY) && !isNaN(lookZ)) {
+        camera(finalCamX, finalCamY, finalCamZ, lookX, lookY, lookZ, 0, 1, 0);
+    } else {
+        console.warn("Camera NaN detected! Skipping update.");
+    }
+    // --------------------
 
     // --- MID BOSS SPAWN ---
     if (!midBoss && !midBossDefeated && score > 250) {
@@ -499,7 +501,7 @@ function drawUI() {
     push();
     resetMatrix();
     camera(0, 0, 500, 0, 0, 0, 0, 1, 0);
-    ortho(-width / 2, width / 2, -height / 2, height / 2, 0, 1000);
+    ortho(-width / 2, width / 2, -height / 2, height / 2, -1000, 1000);
     drawingContext.disable(drawingContext.DEPTH_TEST);
 
     if (myFont) textFont(myFont); else textFont('Courier New');
@@ -586,7 +588,7 @@ function drawGlitch() {
     push();
     resetMatrix();
     camera(0, 0, 500, 0, 0, 0, 0, 1, 0);
-    ortho(-width / 2, width / 2, -height / 2, height / 2, 0, 1000);
+    ortho(-width / 2, width / 2, -height / 2, height / 2, -1000, 1000);
     noStroke();
 
     let count = floor(glitchIntensity * 20);
