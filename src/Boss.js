@@ -26,7 +26,17 @@ class Boss {
         // Attack Logic
         this.fireTimer++;
         if (this.fireTimer > 80) {
-            this.fireRadialAttack();
+            // --- NEW: Random Attack Pattern ---
+            let r = random();
+            if (r < 0.4) {
+                this.fireRadialAttack();
+            } else if (r < 0.8) {
+                this.fireAimedSpread();
+            } else {
+                this.fireFlankAttack();
+            }
+            // ----------------------------------
+
             if (typeof enemyFireSound === 'function') enemyFireSound();
             this.fireTimer = 0;
         }
@@ -40,6 +50,38 @@ class Boss {
             v.setMag(25);
             if (typeof enemyBullets !== 'undefined') {
                 enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z + 300, v, 'ENEMY'));
+            }
+        }
+    }
+
+    // --- NEW ATTACK: Aimed Spread (Shotgun) ---
+    fireAimedSpread() {
+        let target = createVector(0, 0, 500);
+        if (typeof leader !== 'undefined' && leader) target = leader.pos.copy();
+
+        let dir = p5.Vector.sub(target, this.pos);
+        let baseAngle = atan2(dir.x, dir.z);
+
+        // Fire 5 bullets in a fan
+        for (let i = -2; i <= 2; i++) {
+            let theta = baseAngle + i * 0.15; // 0.15 radian spread
+            let v = createVector(sin(theta), 0, cos(theta));
+            v.setMag(30); // Fast speed
+
+            if (typeof enemyBullets !== 'undefined') {
+                enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z + 200, v, 'ENEMY'));
+            }
+        }
+    }
+
+    // --- NEW ATTACK: Flank Fire (Side Cannons) ---
+    fireFlankAttack() {
+        let v = createVector(0, 0, 40); // Very fast forward
+        let offsets = [-400, 400, -200, 200]; // 4 shots from wide positions
+
+        for (let ox of offsets) {
+            if (typeof enemyBullets !== 'undefined') {
+                enemyBullets.push(new Bullet(this.pos.x + ox, this.pos.y, this.pos.z + 100, v, 'ENEMY'));
             }
         }
     }
