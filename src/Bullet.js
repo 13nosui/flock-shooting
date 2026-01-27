@@ -18,8 +18,8 @@ class Bullet {
             this.size = 40;
             this.col = color(0, 255, 100); // Green
         } else if (this.mode === 'ENEMY') {
-            this.size = 100;
-            this.col = color(255, 100, 0); // Orange
+            this.size = 60; // Size 60 for cube
+            this.col = color(255, 50, 50); // Red
         } else {
             this.size = 80;
             this.col = color(isInverted ? 0 : 255);
@@ -88,18 +88,11 @@ class Bullet {
             strokeWeight(3);
             box(15);
         } else if (this.mode === 'ENEMY') {
-            // --- FIX: Use Solid Box for Visibility ---
-            noStroke();
-            fill(255, 100, 0); // Bright Orange Core
-
-            // Draw a solid block: W=30, H=30, L=Size
-            box(30, 30, this.size);
-
-            // Add a wireframe cage for style
-            stroke(255, 150, 0);
-            strokeWeight(2);
+            // --- UPDATED: Enemy Missile as RED CUBE ---
+            stroke(this.col);
+            strokeWeight(3);
             noFill();
-            box(35, 35, this.size + 10);
+            box(60);
         } else {
             strokeWeight(1.5);
             line(0, 0, 0, 0, 0, this.size);
