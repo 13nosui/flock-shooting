@@ -11,7 +11,7 @@ class Grid {
         this.scrollOffset = (this.scrollOffset + speed) % this.spacing;
     }
 
-    display() {
+    display(shakeAmount = 0) {
         push();
         translate(0, this.yPos, 0);
         strokeWeight(1);
@@ -20,15 +20,24 @@ class Grid {
         let col = isInverted ? color(0, 80) : color(255, 80);
         stroke(col);
 
+        // Function to apply jitter
+        const jitter = () => (shakeAmount > 0 ? random(-shakeAmount, shakeAmount) : 0);
+
         // Vertical lines (parallel to Z-axis)
         for (let x = -this.gridSize / 2; x <= this.gridSize / 2; x += this.spacing) {
-            line(x, 0, -this.gridSize / 2, x, 0, this.gridSize / 2);
+            beginShape(LINES);
+            vertex(x + jitter(), 0, -this.gridSize / 2 + jitter());
+            vertex(x + jitter(), 0, this.gridSize / 2 + jitter());
+            endShape();
         }
 
         // Horizontal lines (parallel to X-axis) - Scrolled
         for (let z = -this.gridSize / 2; z <= this.gridSize / 2; z += this.spacing) {
             let currentZ = z + this.scrollOffset;
-            line(-this.gridSize / 2, 0, currentZ, this.gridSize / 2, 0, currentZ);
+            beginShape(LINES);
+            vertex(-this.gridSize / 2 + jitter(), 0, currentZ + jitter());
+            vertex(this.gridSize / 2 + jitter(), 0, currentZ + jitter());
+            endShape();
         }
         pop();
     }

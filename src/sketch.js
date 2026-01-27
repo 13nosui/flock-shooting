@@ -18,9 +18,12 @@ let boss = null;
 let isBossActive = false;
 let curCamX = 0;
 let titleParticles = [];
+let midBoss = null;
+let midBossDefeated = false;
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
 let osc, noiseOsc, env, shotEnv, itemEnv, sawOsc;
+let midBossBgmOsc, midBossBgmEnv;
 let wheelForceY = 0;
 let leaderHistory = [];
 const MAX_HISTORY = 100;
@@ -67,6 +70,12 @@ function setup() {
     sawOsc = new p5.Oscillator('sawtooth');
     sawOsc.amp(0);
     sawOsc.start();
+
+    midBossBgmOsc = new p5.Oscillator('square');
+    midBossBgmOsc.amp(0);
+    midBossBgmOsc.start();
+    midBossBgmEnv = new p5.Envelope();
+    midBossBgmEnv.setADSR(0.01, 0.1, 0, 0);
 
     for (let i = 0; i < NUM_PARTICLES; i++) {
         let p = new WireCross(i === 0);
@@ -174,13 +183,57 @@ function draw() {
 
     camera(finalCamX, finalCamY, finalCamZ, lookX, lookY, lookZ, 0, 1, 0);
 
+    // --- MID BOSS SPAWN ---
+    if (!midBoss && !midBossDefeated && score > 250) {
+        midBoss = new MidBoss();
+        obstacles = []; // Clear normal enemies
+    }
+
+    let gridShake = 0;
+    if (midBoss) {
+        midBoss.update();
+        midBoss.display();
+        gridShake = 5; // Electric jitter
+
+        // BGM: Rhythmic Pulse
+        if (frameCount % 30 === 0) {
+            midBossBgmOsc.freq(100); // Low hum
+            midBossBgmEnv.play(midBossBgmOsc);
+        }
+        if (frameCount % 30 === 15) {
+            midBossBgmOsc.freq(50); // Sub bass
+            midBossBgmEnv.play(midBossBgmOsc);
+        }
+
+        // Bullet Collision with Mid-Boss
+        for (let b of bullets) {
+            if (!b.active) continue;
+            let d = dist(b.pos.x, b.pos.y, b.pos.z, midBoss.pos.x, midBoss.pos.y, midBoss.pos.z);
+            if (d < 100) {
+                if (midBoss.takeDamage(1)) {
+                    // Defeated
+                    spawnExplosion(midBoss.pos.x, midBoss.pos.y, midBoss.pos.z);
+                    addScreenShake(30);
+                    score += 500;
+                    midBoss = null;
+                    midBossDefeated = true;
+                    midBossBgmOsc.amp(0); // Stop sound
+                } else {
+                    spawnDamageText(b.pos.x, b.pos.y - 50, b.pos.z, 1);
+                    if (typeof hitSound === 'function') hitSound();
+                }
+                if (!b.penetrate) b.active = false;
+            }
+        }
+    }
+
     // Sync grid speed with leader's forward velocity
     let forwardSpeed = 15 - leader.vel.z;
     grid.update(forwardSpeed);
-    grid.display();
+    grid.display(gridShake); // Pass shake amount
 
     // Boss Loop
-    if (!boss && score > 500) {
+    if (!boss && score > 800) { // Delayed main boss until after mid boss
         boss = new Boss();
         isBossActive = true; // TRIGGER EMERGENCY MODE
     }
@@ -659,6 +712,9 @@ function resetGame() {
     totalBulletsFired = 0;
     floatingTexts = [];
     shakeMagnitude = 0;
+    midBoss = null;
+    midBossDefeated = false;
+    if (midBossBgmOsc) midBossBgmOsc.amp(0);
     setup();
     gameState = "PLAY";
 }
