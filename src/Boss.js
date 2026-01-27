@@ -1,13 +1,12 @@
 class Boss {
     constructor(phase = 1) {
+        this.phase = phase;
         this.pos = createVector(0, 0, -5000); // Start further back
         this.targetZ = -2000; // Stay somewhat distant
-        this.phase = phase;
 
-        // Combined HP (was 100 + 4*50 = 300)
-        this.coreHp = 300 + (phase - 1) * 200;
+        // Massive HP Scaling
+        this.coreHp = 300 + (this.phase - 1) * 200;
         this.maxCoreHp = this.coreHp;
-
 
         this.active = true;
         this.fireTimer = 0;
@@ -27,19 +26,23 @@ class Boss {
 
         // Attack Logic
         this.fireTimer++;
-        let fireThreshold = max(30, 80 - (this.phase - 1) * 15);
-        if (this.fireTimer > fireThreshold) {
-            // --- NEW: Random Attack Pattern ---
+        // Fire faster in later phases
+        let threshold = max(50, 80 - (this.phase * 5));
 
+        if (this.fireTimer > threshold) {
             let r = random();
-            if (r < 0.4) {
-                this.fireRadialAttack();
-            } else if (r < 0.8) {
-                this.fireAimedSpread();
+
+            // Phase 2+ is much more aggressive with aimed/flank shots
+            if (this.phase > 1) {
+                if (r < 0.2) this.fireRadialAttack();
+                else if (r < 0.6) this.fireAimedSpread(); // High chance to aim
+                else this.fireFlankAttack();
             } else {
-                this.fireFlankAttack();
+                // Phase 1 (Standard)
+                if (r < 0.4) this.fireRadialAttack();
+                else if (r < 0.8) this.fireAimedSpread();
+                else this.fireFlankAttack();
             }
-            // ----------------------------------
 
             if (typeof enemyFireSound === 'function') enemyFireSound();
             this.fireTimer = 0;
@@ -50,7 +53,6 @@ class Boss {
         let count = 16 + (this.phase - 1) * 8; // More bullets each phase
         for (let i = 0; i < count; i++) {
             let theta = (TWO_PI / count) * i + this.wingAngle * 0.5;
-
             let v = createVector(sin(theta) * 15, cos(theta) * 15, 20); // Wider spread
             v.setMag(25);
             if (typeof enemyBullets !== 'undefined') {
@@ -73,7 +75,6 @@ class Boss {
         let endIdx = floor(bulletCount / 2);
 
         for (let i = startIdx; i <= endIdx; i++) {
-
             let theta = baseAngle + i * 0.15; // 0.15 radian spread
             let v = createVector(sin(theta), 0, cos(theta));
             v.setMag(30); // Fast speed
@@ -98,7 +99,6 @@ class Boss {
 
     takeDamage(damage, impactPos) {
         // Simplified Collision: Single Large Sphere
-        // Overall size is roughly 1000x400x800
         let d = dist(impactPos.x, impactPos.y, impactPos.z, this.pos.x, this.pos.y, this.pos.z);
         if (d < 500) { // Hit radius
             this.coreHp -= damage;
@@ -124,15 +124,15 @@ class Boss {
             stroke(255, 50, 50); // Red flash
             strokeWeight(4);
         } else {
-            stroke(150, 0, 50); // Dark chitin color
+            // Color Evolution
+            if (this.phase > 1) stroke(100, 0, 200); // Evil Purple/Black
+            else stroke(150, 0, 50); // Original Red
             strokeWeight(3);
         }
         translate(this.pos.x + shakeX, this.pos.y + shakeY, this.pos.z + shakeZ);
         noFill();
 
         // --- GIANT INSECT MODEL ---
-
-        // Main Body (Thorax & Abdomen)
         push();
         scale(3); // Scale up MidBoss-like structure
 
@@ -146,7 +146,12 @@ class Boss {
         // Mandibles
         push(); translate(-50, 10, 40); rotateY(-0.3); box(30, 20, 60); pop();
         push(); translate(50, 10, 40); rotateY(0.3); box(30, 20, 60); pop();
-        pop();
+
+        // --- NEW: Giant Horn for Phase 2+ ---
+        if (this.phase > 1) {
+            push(); translate(0, -40, 40); rotateX(-0.5); box(20, 20, 100); pop();
+        }
+        pop(); // End Head
 
         // Abdomen (Tail)
         push();
@@ -157,7 +162,7 @@ class Boss {
 
         // Giant Wings
         let flap = sin(this.wingAngle) * 0.3;
-        fill(150, 0, 50, 50); // Semi-transparent dark wings
+        fill(this.phase > 1 ? color(50, 0, 100, 80) : color(150, 0, 50, 50));
 
         // Left Wing
         push();
