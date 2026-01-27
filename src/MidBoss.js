@@ -8,8 +8,8 @@ class MidBoss {
         this.fireTimer = 0;
         this.wingAngle = 0;
 
-        // --- NEW: Flash Timer for Hit Reaction ---
-        this.flashTimer = 0;
+        // --- UPDATED: Shake Timer for Hit Reaction ---
+        this.shakeTimer = 0;
     }
 
     update() {
@@ -55,8 +55,8 @@ class MidBoss {
     takeDamage(amount) {
         this.hp -= amount;
 
-        // --- NEW: Trigger Flash ---
-        this.flashTimer = 3;
+        // --- UPDATED: Trigger Shake & Red Flash ---
+        this.shakeTimer = 20;
 
         if (this.hp <= 0) {
             this.active = false;
@@ -67,15 +67,29 @@ class MidBoss {
 
     display() {
         push();
-        translate(this.pos.x, this.pos.y, this.pos.z);
 
-        // --- INSECT DESIGN & HIT REACTION ---
-        if (this.flashTimer > 0) {
-            stroke(255);       // White Flash
-            strokeWeight(4);   // Thicker lines
-            this.flashTimer--;
+        // --- SHAKE CALCULATION ---
+        let shakeX = 0, shakeY = 0, shakeZ = 0;
+        if (this.shakeTimer > 0) {
+            shakeX = random(-15, 15);
+            shakeY = random(-15, 15);
+            shakeZ = random(-15, 15);
+            this.shakeTimer--;
+        }
+
+        translate(this.pos.x + shakeX, this.pos.y + shakeY, this.pos.z + shakeZ);
+
+        // --- COLOR & ROTATION ---
+        if (this.shakeTimer > 0) {
+            // Hit Reaction: Red & Jittery
+            stroke(255, 50, 50);
+            strokeWeight(3);
+            rotateX(random(-0.1, 0.1));
+            rotateY(random(-0.1, 0.1));
+            rotateZ(random(-0.1, 0.1));
         } else {
-            stroke(100, 255, 100); // Normal Toxic Green
+            // Normal: Toxic Green
+            stroke(100, 255, 100);
             strokeWeight(2);
         }
 
@@ -99,19 +113,21 @@ class MidBoss {
 
         // Wings
         let flap = sin(frameCount * 0.8) * 0.5;
+
         // Left Wing
         push();
         translate(-40, -30, 20);
         rotateZ(-flap + 0.5);
-        strokeWeight(1);
+        if (this.shakeTimer <= 0) strokeWeight(1); // Keep wings thin unless hit
         fill(100, 255, 100, 30);
         box(180, 10, 80);
         pop();
+
         // Right Wing
         push();
         translate(40, -30, 20);
         rotateZ(flap - 0.5);
-        strokeWeight(1);
+        if (this.shakeTimer <= 0) strokeWeight(1);
         fill(100, 255, 100, 30);
         box(180, 10, 80);
         pop();
