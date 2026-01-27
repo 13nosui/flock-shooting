@@ -1,9 +1,11 @@
 class MidBoss {
-    constructor() {
+    constructor(phase = 1) {
         this.pos = createVector(0, 0, -4000);
         this.targetZ = -1200;
-        this.hp = 70;
-        this.maxHp = 70;
+        this.phase = phase;
+        this.hp = 70 + (phase - 1) * 50;
+        this.maxHp = this.hp;
+
         this.active = true;
         this.fireTimer = 0;
         this.wingAngle = 0;
@@ -24,7 +26,9 @@ class MidBoss {
 
         // Attack
         this.fireTimer++;
-        if (this.fireTimer > 80) {
+        let fireThreshold = max(40, 80 - (this.phase - 1) * 10);
+        if (this.fireTimer > fireThreshold) {
+
             this.fire();
             this.fireTimer = 0;
         }
@@ -38,7 +42,12 @@ class MidBoss {
         let dir = p5.Vector.sub(target, this.pos);
         let speed = 20;
 
-        for (let angle of [-0.2, 0, 0.2]) {
+        let angles = [-0.2, 0, 0.2];
+        if (this.phase >= 2) angles = [-0.4, -0.2, 0, 0.2, 0.4];
+        if (this.phase >= 3) angles = [-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6];
+
+        for (let angle of angles) {
+
             let d = dir.copy();
             let ang = atan2(d.x, d.z) + angle;
             d.x = sin(ang) * d.mag();

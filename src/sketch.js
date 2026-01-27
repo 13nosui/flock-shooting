@@ -26,6 +26,8 @@ let joyStartX = 0;
 let joyStartY = 0;
 let bossSpawnDelay = 0;
 let totalDistance = 0;
+let gamePhase = 1;
+
 
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
@@ -263,9 +265,10 @@ function draw() {
     // --- MID BOSS SPAWN ---
     // UPDATED: Spawn based on distance (approx 6000 units) instead of score
     if (!midBoss && !midBossDefeated && totalDistance > 6000) {
-        midBoss = new MidBoss();
+        midBoss = new MidBoss(gamePhase);
         obstacles = []; // Clear normal enemies
     }
+
 
 
     // --- BOSS SPAWN LOGIC ---
@@ -273,12 +276,12 @@ function draw() {
     if (midBossDefeated && !boss && !bossDefeated) {
         bossSpawnDelay++;
 
-        // Wait ~3 seconds after MidBoss death before Boss appears
         if (bossSpawnDelay > 180) {
-            boss = new Boss();
+            boss = new Boss(gamePhase);
             isBossActive = true;
             bossSpawnDelay = 0;
         }
+
     }
     if (boss) {
         boss.update();
@@ -295,11 +298,19 @@ function draw() {
             // -------------------------------------------------
             addScreenShake(50);
             triggerGlitch(1.0);
-            score += 1000;
+            score += 1000 * gamePhase;
             boss = null;
             bossDefeated = true; // Mark as done for this session
             isBossActive = false; // END EMERGENCY MODE
+
+            // --- NEW: LOOP LOGIC ---
+            gamePhase++;
+            midBossDefeated = false;
+            bossDefeated = false;
+            totalDistance = 0; // Reset distance to trigger MidBoss again
+            // -----------------------
         }
+
     }
 
     // Scenery Logic - DISABLED for cleaner look
@@ -585,11 +596,13 @@ function drawUI() {
     // Stats
     textAlign(LEFT); textSize(18);
     text("SYNC_RATE: " + floor(score) + "%", -width * 0.45, -height * 0.45);
+    text("PHASE: " + gamePhase, -width * 0.45, -height * 0.45 + 30);
 
     if (weaponTimer > 0) {
         fill(255, 200, 0);
-        text("WEAPON: " + weaponMode + " (" + ceil(weaponTimer / 60) + "s)", -width * 0.45, -height * 0.45 + 30);
+        text("WEAPON: " + weaponMode + " (" + ceil(weaponTimer / 60) + "s)", -width * 0.45, -height * 0.45 + 60);
     }
+
 
     // Dashboard Stats (Top Right)
     textAlign(RIGHT, TOP);
@@ -711,7 +724,8 @@ function keyPressed() {
         if (key === 'b' || key === 'B') {
             if (!boss) {
                 console.log("Debug: Spawning Boss...");
-                boss = new Boss();
+                boss = new Boss(gamePhase);
+
                 isBossActive = true;
 
                 // --- FIX: Prevent MidBoss from appearing ---
@@ -728,7 +742,8 @@ function keyPressed() {
         if (key === 'm' || key === 'M') {
             if (!midBoss && !boss) {
                 console.log("Debug: Spawning Mid-Boss...");
-                midBoss = new MidBoss();
+                midBoss = new MidBoss(gamePhase);
+
                 midBossDefeated = false;
                 obstacles = [];
             }
@@ -794,6 +809,8 @@ function resetGame() {
     bossDefeated = false;
     bossSpawnDelay = 0;
     totalDistance = 0;
+    gamePhase = 1;
+
 
     if (midBossBgmOsc) midBossBgmOsc.amp(0);
     setup();

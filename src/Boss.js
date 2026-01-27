@@ -1,11 +1,13 @@
 class Boss {
-    constructor() {
+    constructor(phase = 1) {
         this.pos = createVector(0, 0, -5000); // Start further back
         this.targetZ = -2000; // Stay somewhat distant
+        this.phase = phase;
 
         // Combined HP (was 100 + 4*50 = 300)
-        this.coreHp = 300;
-        this.maxCoreHp = 300;
+        this.coreHp = 300 + (phase - 1) * 200;
+        this.maxCoreHp = this.coreHp;
+
 
         this.active = true;
         this.fireTimer = 0;
@@ -25,8 +27,10 @@ class Boss {
 
         // Attack Logic
         this.fireTimer++;
-        if (this.fireTimer > 80) {
+        let fireThreshold = max(30, 80 - (this.phase - 1) * 15);
+        if (this.fireTimer > fireThreshold) {
             // --- NEW: Random Attack Pattern ---
+
             let r = random();
             if (r < 0.4) {
                 this.fireRadialAttack();
@@ -43,9 +47,10 @@ class Boss {
     }
 
     fireRadialAttack() {
-        let count = 16; // More bullets
+        let count = 16 + (this.phase - 1) * 8; // More bullets each phase
         for (let i = 0; i < count; i++) {
             let theta = (TWO_PI / count) * i + this.wingAngle * 0.5;
+
             let v = createVector(sin(theta) * 15, cos(theta) * 15, 20); // Wider spread
             v.setMag(25);
             if (typeof enemyBullets !== 'undefined') {
@@ -62,8 +67,13 @@ class Boss {
         let dir = p5.Vector.sub(target, this.pos);
         let baseAngle = atan2(dir.x, dir.z);
 
-        // Fire 5 bullets in a fan
-        for (let i = -2; i <= 2; i++) {
+        // Fire more bullets in a fan each phase
+        let bulletCount = 5 + (this.phase - 1) * 2;
+        let startIdx = -floor(bulletCount / 2);
+        let endIdx = floor(bulletCount / 2);
+
+        for (let i = startIdx; i <= endIdx; i++) {
+
             let theta = baseAngle + i * 0.15; // 0.15 radian spread
             let v = createVector(sin(theta), 0, cos(theta));
             v.setMag(30); // Fast speed
