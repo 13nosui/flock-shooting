@@ -1,16 +1,15 @@
 class MidBoss {
     constructor(phase = 1) {
+        this.phase = phase;
         this.pos = createVector(0, 0, -4000);
         this.targetZ = -1200;
-        this.phase = phase;
-        this.hp = 70 + (phase - 1) * 50;
+
+        // Scale HP
+        this.hp = 70 + (this.phase - 1) * 50;
         this.maxHp = this.hp;
 
         this.active = true;
         this.fireTimer = 0;
-        this.wingAngle = 0;
-
-        // --- UPDATED: Shake Timer for Hit Reaction ---
         this.shakeTimer = 0;
     }
 
@@ -24,49 +23,40 @@ class MidBoss {
         // FIX: Lock Y-axis to 0
         this.pos.y = 0;
 
-        // Attack
+        // Attack Frequency increases with phase
         this.fireTimer++;
-        let fireThreshold = max(40, 80 - (this.phase - 1) * 10);
-        if (this.fireTimer > fireThreshold) {
-
+        let threshold = max(40, 80 - (this.phase * 5)); // Faster fire rate
+        if (this.fireTimer > threshold) {
             this.fire();
             this.fireTimer = 0;
         }
     }
 
     fire() {
-        // 3-Way Shot
-        let target = createVector(0, 0, 500); // Rough player direction
+        let target = createVector(0, 0, 500);
         if (typeof leader !== 'undefined') target = leader.pos.copy();
-
         let dir = p5.Vector.sub(target, this.pos);
-        let speed = 20;
+        let speed = 20 + (this.phase * 2);
 
-        let angles = [-0.2, 0, 0.2];
-        if (this.phase >= 2) angles = [-0.4, -0.2, 0, 0.2, 0.4];
-        if (this.phase >= 3) angles = [-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6];
+        // Phase 1: 3-way, Phase 2+: 5-way
+        let angles = (this.phase > 1) ? [-0.4, -0.2, 0, 0.2, 0.4] : [-0.2, 0, 0.2];
 
         for (let angle of angles) {
-
             let d = dir.copy();
             let ang = atan2(d.x, d.z) + angle;
             d.x = sin(ang) * d.mag();
             d.z = cos(ang) * d.mag();
             d.setMag(speed);
-
             if (typeof enemyBullets !== 'undefined') {
-                if (typeof enemyFireSound === 'function') enemyFireSound();
                 enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z + 100, d, 'ENEMY'));
             }
         }
+        if (typeof enemyFireSound === 'function') enemyFireSound();
     }
 
     takeDamage(amount) {
         this.hp -= amount;
-
-        // --- UPDATED: Trigger Shake & Red Flash ---
         this.shakeTimer = 20;
-
         if (this.hp <= 0) {
             this.active = false;
             return true;
@@ -77,7 +67,7 @@ class MidBoss {
     display() {
         push();
 
-        // --- SHAKE CALCULATION ---
+        // Shake logic
         let shakeX = 0, shakeY = 0, shakeZ = 0;
         if (this.shakeTimer > 0) {
             shakeX = random(-15, 15);
@@ -88,17 +78,18 @@ class MidBoss {
 
         translate(this.pos.x + shakeX, this.pos.y + shakeY, this.pos.z + shakeZ);
 
-        // --- COLOR & ROTATION ---
+        // --- EVOLVED APPEARANCE ---
         if (this.shakeTimer > 0) {
-            // Hit Reaction: Red & Jittery
             stroke(255, 50, 50);
             strokeWeight(3);
             rotateX(random(-0.1, 0.1));
             rotateY(random(-0.1, 0.1));
             rotateZ(random(-0.1, 0.1));
+        } else if (this.phase > 1) {
+            stroke(255, 150, 0); // Orange/Red for evolved
+            strokeWeight(3);
         } else {
-            // Normal: Toxic Green
-            stroke(100, 255, 100);
+            stroke(100, 255, 100); // Original Green
             strokeWeight(2);
         }
 
@@ -127,8 +118,7 @@ class MidBoss {
         push();
         translate(-40, -30, 20);
         rotateZ(-flap + 0.5);
-        if (this.shakeTimer <= 0) strokeWeight(1); // Keep wings thin unless hit
-        fill(100, 255, 100, 30);
+        fill(this.phase > 1 ? color(255, 100, 0, 50) : color(100, 255, 100, 30));
         box(180, 10, 80);
         pop();
 
@@ -136,10 +126,18 @@ class MidBoss {
         push();
         translate(40, -30, 20);
         rotateZ(flap - 0.5);
-        if (this.shakeTimer <= 0) strokeWeight(1);
-        fill(100, 255, 100, 30);
+        fill(this.phase > 1 ? color(255, 100, 0, 50) : color(100, 255, 100, 30));
         box(180, 10, 80);
         pop();
+
+        // --- NEW: Phase 2+ Spikes ---
+        if (this.phase > 1) {
+            push();
+            translate(0, -50, 0);
+            rotateX(PI / 4);
+            box(20, 80, 20); // Spike on back
+            pop();
+        }
 
         // --- HP BAR ---
         push();
