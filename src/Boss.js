@@ -21,7 +21,7 @@ class Boss {
         for (let i = 0; i < 4; i++) {
             this.shields.push({
                 active: true,
-                hp: 30, // Reduced from 80
+                hp: 50, // Increased to 50
                 offsetAngle: (TWO_PI / 4) * i,
                 size: 250,
                 dist: 700
