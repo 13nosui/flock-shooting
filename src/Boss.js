@@ -186,7 +186,10 @@ class Boss {
         rect(-150, -15, 300, 30); // Background
 
         fill(255, 50, 50);
-        let hpW = map(max(0, this.coreHp), 0, this.maxCoreHp, 0, 300);
+        // FIX: Ensure width is never negative
+        let hpW = map(this.coreHp, 0, this.maxCoreHp, 0, 300);
+        hpW = max(0, hpW); // Constrain to 0 minimum
+
         rect(-150, -15, hpW, 30); // HP Bar
 
         stroke(255);
