@@ -62,8 +62,11 @@ class Boss {
 
     takeDamage(damage, impactPos) {
         // 1. Check Shields
+        let anyShieldActive = false;
         for (let s of this.shields) {
             if (!s.active) continue;
+            anyShieldActive = true;
+
             let sx = this.pos.x + cos(this.angle + s.offsetAngle) * s.dist;
             let sy = this.pos.y + sin(this.angle + s.offsetAngle) * s.dist;
             let sz = this.pos.z;
@@ -71,14 +74,10 @@ class Boss {
             let d = dist(impactPos.x, impactPos.y, impactPos.z, sx, sy, sz);
             if (d < s.size / 2 + 50) {
                 s.hp -= damage;
-
-                // --- TRIGGER SHAKE ---
                 this.shakeTimer = 10;
-                // ---------------------
 
                 if (s.hp <= 0) {
                     s.active = false;
-                    // --- UPDATED: Shield Destruction Effect ---
                     if (typeof spawnExplosion === 'function') {
                         for (let k = 0; k < 5; k++) {
                             spawnExplosion(
@@ -97,19 +96,28 @@ class Boss {
         }
 
         // 2. Check Core
-        let d = dist(impactPos.x, impactPos.y, impactPos.z, this.pos.x, this.pos.y, this.pos.z);
-        if (d < this.coreSize / 2 + 50) {
-            this.coreHp -= damage;
+        // ONLY Vulnerable if all shields are destroyed
+        if (!anyShieldActive) {
+            let d = dist(impactPos.x, impactPos.y, impactPos.z, this.pos.x, this.pos.y, this.pos.z);
+            if (d < this.coreSize / 2 + 50) {
+                this.coreHp -= damage;
+                this.shakeTimer = 10;
 
-            // --- TRIGGER SHAKE ---
-            this.shakeTimer = 10;
-            // ---------------------
-
-            if (this.coreHp <= 0) {
-                this.active = false;
-                return 'DESTROYED';
+                if (this.coreHp <= 0) {
+                    this.active = false;
+                    return 'DESTROYED';
+                }
+                if (typeof hitSound === 'function') hitSound();
+                return 'CORE';
             }
-            return 'CORE';
+        } else {
+            // Check if bullet "hits" core area but is blocked by invulnerability
+            let d = dist(impactPos.x, impactPos.y, impactPos.z, this.pos.x, this.pos.y, this.pos.z);
+            if (d < this.coreSize / 2 + 50) {
+                // Add a visual or sound cue for blocked damage?
+                if (typeof hitSound === 'function') hitSound(); // Still play hit sound to show contact
+                return 'CORE_INVULNERABLE';
+            }
         }
 
         return 'MISS';

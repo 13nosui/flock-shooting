@@ -20,6 +20,7 @@ let curCamX = 0;
 let titleParticles = [];
 let midBoss = null;
 let midBossDefeated = false;
+let bossDefeated = false; // Prevents immediate respawn
 let joystickActive = false;
 let joyStartX = 0;
 let joyStartY = 0;
@@ -241,7 +242,7 @@ function draw() {
     grid.display(gridShake); // Pass shake amount
 
     // Boss Loop
-    if (!boss && score > 800) { // Delayed main boss until after mid boss
+    if (!boss && !bossDefeated && score > 800) { // Delayed main boss until after mid boss
         boss = new Boss();
         isBossActive = true; // TRIGGER EMERGENCY MODE
     }
@@ -262,6 +263,7 @@ function draw() {
             triggerGlitch(1.0);
             score += 1000;
             boss = null;
+            bossDefeated = true; // Mark as done for this session
             isBossActive = false; // END EMERGENCY MODE
         }
     }
@@ -315,6 +317,12 @@ function draw() {
         // Check Boss Collision
         if (boss && bullets[i].active) {
             let hitResult = boss.takeDamage(1, bullets[i].pos);
+
+            if (hitResult === 'DESTROYED') {
+                // Trigger Death Logic Immediately
+                boss.active = false;
+            }
+
             if (hitResult !== 'MISS') {
                 spawnDamageText(bullets[i].pos.x, bullets[i].pos.y - 100, bullets[i].pos.z, 1);
                 if (typeof hitSound === 'function') hitSound();
@@ -749,6 +757,7 @@ function resetGame() {
     shakeMagnitude = 0;
     midBoss = null;
     midBossDefeated = false;
+    bossDefeated = false;
     if (midBossBgmOsc) midBossBgmOsc.amp(0);
     setup();
     gameState = "PLAY";
