@@ -18,8 +18,9 @@ class Bullet {
             this.size = 40;
             this.col = color(0, 255, 100); // Green
         } else if (this.mode === 'ENEMY') {
-            this.size = 60; // Size 60 for cube
-            this.col = color(255, 50, 50); // Red
+            // --- UPDATED: Enemy Missile (Small Orange Cube) ---
+            this.size = 20;
+            this.col = color(255, 100, 0); // Orange
         } else {
             this.size = 80;
             this.col = color(isInverted ? 0 : 255);
@@ -88,11 +89,10 @@ class Bullet {
             strokeWeight(3);
             box(15);
         } else if (this.mode === 'ENEMY') {
-            // --- UPDATED: Enemy Missile as RED CUBE ---
-            stroke(this.col);
-            strokeWeight(3);
+            // --- UPDATED: Draw Cube ---
+            strokeWeight(2);
             noFill();
-            box(60);
+            box(20); // Small cube
         } else {
             strokeWeight(1.5);
             line(0, 0, 0, 0, 0, this.size);
