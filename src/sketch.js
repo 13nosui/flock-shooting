@@ -174,6 +174,12 @@ function draw() {
     shakeMagnitude *= shakeDecay;
     if (shakeMagnitude < 0.1) shakeMagnitude = 0;
 
+    // 1. Define variables FIRST (in the main scope of draw)
+    let finalCamX = curCamX + shakeX;
+    let finalCamY = -1200 + shakeY;
+    let finalCamZ = leader.pos.z + 800 + shakeZ;
+
+    // 2. Perform Safety Check & Apply Camera
     // --- SAFETY CHECK ---
     if (!isNaN(finalCamX) && !isNaN(finalCamY) && !isNaN(finalCamZ) &&
         !isNaN(lookX) && !isNaN(lookY) && !isNaN(lookZ)) {
