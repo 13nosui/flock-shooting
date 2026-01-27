@@ -249,7 +249,15 @@ function draw() {
         boss.update();
         boss.display();
         if (!boss.active) {
-            spawnExplosion(boss.pos.x, boss.pos.y, boss.pos.z);
+            // --- UPDATED: Massive Explosion for Boss Death ---
+            for (let k = 0; k < 15; k++) {
+                spawnExplosion(
+                    boss.pos.x + random(-150, 150),
+                    boss.pos.y + random(-100, 100),
+                    boss.pos.z + random(-150, 150)
+                );
+            }
+            // -------------------------------------------------
             addScreenShake(50);
             triggerGlitch(1.0);
             score += 1000;
@@ -689,7 +697,7 @@ function keyPressed() {
             weaponMode = 'LASER';
             weaponTimer = 3000; // ~50 seconds
             growFlock(30); // Add 30 drones
-            score += 1000; // Boost score for difficulty ramp
+            // score += 1000; // REMOVED to prevent auto-spawning bosses
             if (typeof itemEnv !== 'undefined' && typeof osc !== 'undefined') {
                 itemEnv.play(osc);
                 osc.freq(880);

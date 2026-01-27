@@ -78,7 +78,16 @@ class Boss {
 
                 if (s.hp <= 0) {
                     s.active = false;
-                    if (typeof spawnExplosion === 'function') spawnExplosion(sx, sy, sz);
+                    // --- UPDATED: Shield Destruction Effect ---
+                    if (typeof spawnExplosion === 'function') {
+                        for (let k = 0; k < 5; k++) {
+                            spawnExplosion(
+                                sx + random(-50, 50),
+                                sy + random(-50, 50),
+                                sz + random(-50, 50)
+                            );
+                        }
+                    }
                     if (typeof destroySound === 'function') destroySound();
                 } else {
                     if (typeof hitSound === 'function') hitSound();
@@ -158,6 +167,27 @@ class Boss {
             box(s.size);
             pop();
         }
+
+        // --- NEW: HP BAR ---
+        push();
+        translate(0, -this.coreSize / 2 - 120, 0); // Position above core
+        rotateY(-this.angle * 0.5); // Counter-rotate to face camera roughly
+
+        noStroke();
+        fill(50);
+        rect(-150, -15, 300, 30); // Background
+
+        fill(255, 50, 50);
+        let hpW = map(this.coreHp, 0, this.maxCoreHp, 0, 300);
+        rect(-150, -15, hpW, 30); // HP Bar
+
+        stroke(255);
+        strokeWeight(2);
+        noFill();
+        rect(-150, -15, 300, 30); // Frame
+        pop();
+        // -------------------
+
         pop();
     }
 }
