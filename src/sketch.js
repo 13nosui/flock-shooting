@@ -669,9 +669,18 @@ function drawGameOverScreen() {
 
     if (myFont) textFont(myFont); else textFont('Courier New');
     textAlign(CENTER, CENTER); fill(255);
+
+    // Tighten spacing for Title
+    drawingContext.letterSpacing = "-5px";
     textSize(40); text("GAME OVER", 0, -20);
+
+    // Moderate spacing for details
+    drawingContext.letterSpacing = "-2px";
     textSize(18); text("FINAL SYNC: " + floor(score) + "%", 0, 20);
     textSize(14); text("CLICK TO REBOOT", 0, 60);
+
+    // Reset spacing
+    drawingContext.letterSpacing = "0px";
     pop();
 }
 
