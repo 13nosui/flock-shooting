@@ -35,6 +35,7 @@ let enemiesDefeated = 0;
 let totalDamageDealt = 0;
 let totalBulletsFired = 0;
 let floatingTexts = [];
+let shakeMagnitude = 0;
 let shakeDecay = 0.9;
 let glitchIntensity = 0;
 
@@ -74,16 +75,14 @@ function setup() {
     grid = new Grid();
     curCamX = 0;
 
-    // --- ASYNC FONT LOADING ---
+    // --- FIX 3: Async Font Loading ---
     loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Bold.otf',
         (font) => {
-            console.log("Font loaded successfully");
+            console.log("Font loaded!");
             myFont = font;
             initTitleParticles();
         },
-        () => {
-            console.warn("Font loading failed, using fallback.");
-        }
+        () => console.warn("Font failed to load, using fallback.")
     );
 }
 
@@ -94,11 +93,11 @@ function updateBounds() {
 }
 
 function initTitleParticles() {
+    if (!myFont) return; // Safety check
     titleParticles = [];
     let txt = "Flock Shooting";
     let fontSize = min(width / 12, 60);
 
-    // Calculate bounding box to center text
     let bounds = myFont.textBounds(txt, 0, 0, fontSize);
     let startX = -bounds.w / 2;
     let startY = bounds.h / 2;
@@ -229,7 +228,7 @@ function draw() {
                 let isDestroyed = o.takeDamage(1);
                 totalDamageDealt++;
                 spawnDamageText(o.pos.x, o.pos.y - o.size / 2 - 50, o.pos.z, 1);
-                hitSound();
+                if (typeof hitSound === 'function') hitSound();
 
                 if (isDestroyed) {
                     // Death Logic
@@ -239,7 +238,7 @@ function draw() {
                     items.push(new Item(o.pos.x, o.pos.y, o.pos.z, dropType));
                     spawnExplosion(o.pos.x, o.pos.y, o.pos.z);
                     triggerHitEffect();
-                    destroySound();
+                    if (typeof destroySound === 'function') destroySound();
                 }
 
                 if (!b.penetrate) {
@@ -254,7 +253,7 @@ function draw() {
             let hitResult = boss.takeDamage(1, bullets[i].pos);
             if (hitResult !== 'MISS') {
                 spawnDamageText(bullets[i].pos.x, bullets[i].pos.y - 100, bullets[i].pos.z, 1);
-                hitSound();
+                if (typeof hitSound === 'function') hitSound();
                 if (!bullets[i].penetrate) bullets[i].active = false;
 
                 if (hitResult === 'SHIELD') {
@@ -673,7 +672,10 @@ function resetGame() {
 
 function drawGameOverScreen() {
     push(); resetMatrix(); camera(0, 0, 500, 0, 0, 0, 0, 1, 0); ortho(-width / 2, width / 2, -height / 2, height / 2, 0, 1000);
-    background(0); textFont(myFont); textAlign(CENTER, CENTER); fill(255);
+    background(0);
+
+    if (myFont) textFont(myFont); else textFont('Courier New');
+    textAlign(CENTER, CENTER); fill(255);
     textSize(40); text("GAME OVER", 0, -20);
     textSize(18); text("FINAL SYNC: " + floor(score) + "%", 0, 20);
     textSize(14); text("CLICK TO REBOOT", 0, 60);
