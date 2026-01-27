@@ -52,6 +52,7 @@ class Boss {
         for (let i = 0; i < count; i++) {
             let theta = (TWO_PI / count) * i + this.angle;
             let v = createVector(sin(theta) * 10, cos(theta) * 10, 20);
+            v.setMag(24.5); // Force speed to user spec
             if (typeof enemyBullets !== 'undefined') {
                 // FIX: Spawn bullets further ahead to prevent clipping (z + 600)
                 enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z + 600, v, 'ENEMY'));

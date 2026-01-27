@@ -60,9 +60,9 @@ class VoxelObstacle {
                 let dir = p5.Vector.sub(leader.pos, this.pos);
 
                 // Determine Bullet Speed based on Enemy Type
-                let bulletSpeed = 20; // Default (Tank)
-                if (this.type === 'NORMAL') bulletSpeed = 50;
-                if (this.type === 'INTERCEPTOR') bulletSpeed = 80;
+                let bulletSpeed = 10; // TANK (was 20)
+                if (this.type === 'NORMAL') bulletSpeed = 20; // NORMAL (was 50)
+                if (this.type === 'INTERCEPTOR') bulletSpeed = 40; // INTERCEPTOR (was 80)
 
                 // Spawn position: Start slightly in front of the enemy to avoid clipping
                 let spawnZ = this.pos.z + (this.size / 2) + 20;

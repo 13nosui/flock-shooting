@@ -36,7 +36,7 @@ class MidBoss {
         if (typeof leader !== 'undefined') target = leader.pos.copy();
 
         let dir = p5.Vector.sub(target, this.pos);
-        let speed = 40;
+        let speed = 20;
 
         for (let angle of [-0.2, 0, 0.2]) {
             let d = dir.copy();
