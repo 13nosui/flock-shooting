@@ -620,6 +620,17 @@ function keyPressed() {
                 isBossActive = true;
             }
         }
+
+        // --- DEBUG: Press 'M' to spawn Mid-Boss ---
+        if (key === 'm' || key === 'M') {
+            if (!midBoss && !boss) {
+                console.log("Debug: Spawning Mid-Boss...");
+                midBoss = new MidBoss();
+                midBossDefeated = false; // Reset defeat flag so it stays active
+                obstacles = []; // Clear small enemies
+            }
+        }
+        // ------------------------------------------
     }
 }
 
