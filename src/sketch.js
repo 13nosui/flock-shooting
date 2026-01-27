@@ -24,6 +24,7 @@ let bossDefeated = false; // Prevents immediate respawn
 let joystickActive = false;
 let joyStartX = 0;
 let joyStartY = 0;
+let bossSpawnDelay = 0;
 
 let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
 let osc, noiseOsc, env, shotEnv, itemEnv, sawOsc;
@@ -259,10 +260,17 @@ function draw() {
     grid.update(forwardSpeed);
     grid.display(gridShake, gridWave); // Pass both params
 
-    // Boss Loop
-    if (!boss && !bossDefeated && score > 800) { // Delayed main boss until after mid boss
-        boss = new Boss();
-        isBossActive = true; // TRIGGER EMERGENCY MODE
+    // --- BOSS SPAWN LOGIC ---
+    // Spawn Boss ONLY if MidBoss is defeated
+    if (midBossDefeated && !boss && !bossDefeated) {
+        bossSpawnDelay++;
+        
+        // Wait ~3 seconds after MidBoss death before Boss appears
+        if (bossSpawnDelay > 180) {
+            boss = new Boss();
+            isBossActive = true; 
+            bossSpawnDelay = 0; 
+        }
     }
     if (boss) {
         boss.update();
@@ -776,6 +784,7 @@ function resetGame() {
     midBoss = null;
     midBossDefeated = false;
     bossDefeated = false;
+    bossSpawnDelay = 0;
     if (midBossBgmOsc) midBossBgmOsc.amp(0);
     setup();
     gameState = "PLAY";
