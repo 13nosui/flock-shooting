@@ -854,21 +854,35 @@ function fire() {
 
     shotEnv.play(osc);
 
+    // --- NEW: Calculate Shooting Direction ---
+    let baseDir = createVector(0, 0, -1); // Default: Forward
+    if (leader && leader.vel.mag() > 0.5) {
+        baseDir = leader.vel.copy().normalize();
+    }
+    // ----------------------------------------
+
     if (weaponMode === 'LASER') {
         osc.freq(330);
-        bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, createVector(0, 0, -60), 'LASER'));
+        let v = baseDir.copy().setMag(60);
+        bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, v, 'LASER'));
         totalBulletsFired++;
     } else if (weaponMode === 'HOMING') {
         osc.freq(660);
         for (let i = -1; i <= 1; i++) {
-            let v = createVector(i * 10, random(-5, 5), -30);
+            let v = baseDir.copy();
+            // Add randomness for homing spread
+            v.x += random(-0.5, 0.5);
+            v.z += random(-0.5, 0.5);
+            v.setMag(30);
+
             bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, v, 'HOMING'));
             totalBulletsFired++;
         }
     } else {
         osc.freq(isLaserCrit ? 440 : 880);
         if (isLaserCrit) {
-            bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, createVector(0, 0, -50), 'LASER'));
+            let v = baseDir.copy().setMag(50);
+            bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, v, 'LASER'));
             totalBulletsFired++;
         } else {
             let spreadCount = 0;
@@ -876,7 +890,12 @@ function fire() {
             else if (flockSize >= 10) spreadCount = 1;
 
             for (let i = -spreadCount; i <= spreadCount; i++) {
-                let v = createVector(i * 3, 0, -40);
+                // Rotate baseDir around Y axis for spread
+                let angle = i * 0.15; // Spread angle
+                let bx = baseDir.x * cos(angle) + baseDir.z * sin(angle);
+                let bz = -baseDir.x * sin(angle) + baseDir.z * cos(angle);
+
+                let v = createVector(bx, 0, bz).setMag(40);
                 bullets.push(new Bullet(leader.pos.x, leader.pos.y, leader.pos.z, v, 'NORMAL'));
                 totalBulletsFired++;
             }
