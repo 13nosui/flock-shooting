@@ -854,12 +854,9 @@ function fire() {
 
     shotEnv.play(osc);
 
-    // --- NEW: Calculate Shooting Direction ---
-    let baseDir = createVector(0, 0, -1); // Default: Forward
-    if (leader && leader.vel.mag() > 0.5) {
-        baseDir = leader.vel.copy().normalize();
-    }
-    // ----------------------------------------
+    // --- UPDATED: Always Fire Forward ---
+    let baseDir = createVector(0, 0, -1);
+    // ------------------------------------
 
     if (weaponMode === 'LASER') {
         osc.freq(330);
