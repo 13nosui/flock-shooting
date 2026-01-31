@@ -36,13 +36,8 @@ class WireCross {
         this.acc.mult(0);
         this.vel.mult(0.9); // 慣性
 
-        // Constrain position to keep flock on stage
-        let limitX = width * 0.6;
-        let limitZ = 600; // Fixed depth range
-
-        this.pos.x = constrain(this.pos.x, -limitX, limitX);
-        this.pos.y = constrain(this.pos.y, -boundsY * 2, boundsY * 2); // Keep altitude freedom
-        this.pos.z = constrain(this.pos.z, -limitZ, limitZ);
+        // Constrain position only if necessary (e.g. height)
+        this.pos.y = constrain(this.pos.y, -boundsY * 2, boundsY * 2);
     }
 
     updateAsLeader() {

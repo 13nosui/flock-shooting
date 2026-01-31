@@ -164,33 +164,30 @@ function draw() {
     }
 
     push();
-    // High-angle top-down view
-    curCamX = lerp(curCamX, leader.pos.x * 0.5, 0.05);
+    // --- CAMERA FOLLOW LOGIC ---
+    // Smoothly follow player X and Z
+    curCamX = lerp(curCamX, leader.pos.x, 0.1);
+    let targetCamZ = leader.pos.z + 800; // Keep fixed distance behind
 
-    // Look slightly ahead of the leader
-    let lookX = leader.pos.x * 0.2;
-    let lookY = 0;
-    let lookZ = leader.pos.z - 500;
-
-    // Shake logic before camera
+    // Shake
     let shakeX = random(-shakeMagnitude, shakeMagnitude);
     let shakeY = random(-shakeMagnitude, shakeMagnitude);
     let shakeZ = random(-shakeMagnitude, shakeMagnitude);
     shakeMagnitude *= shakeDecay;
     if (shakeMagnitude < 0.1) shakeMagnitude = 0;
 
-    // 1. Define variables FIRST (in the main scope of draw)
     let finalCamX = curCamX + shakeX;
     let finalCamY = -1200 + shakeY;
-    let finalCamZ = leader.pos.z + 800 + shakeZ;
+    let finalCamZ = targetCamZ + shakeZ;
 
-    // 2. Perform Safety Check & Apply Camera
-    // --- SAFETY CHECK ---
-    if (!isNaN(finalCamX) && !isNaN(finalCamY) && !isNaN(finalCamZ) &&
-        !isNaN(lookX) && !isNaN(lookY) && !isNaN(lookZ)) {
+    // Look at player
+    let lookX = leader.pos.x;
+    let lookY = 0;
+    let lookZ = leader.pos.z - 200; // Look slightly ahead
+
+    // Apply Camera
+    if (!isNaN(finalCamX) && !isNaN(finalCamY) && !isNaN(finalCamZ)) {
         camera(finalCamX, finalCamY, finalCamZ, lookX, lookY, lookZ, 0, 1, 0);
-    } else {
-        console.warn("Camera NaN detected! Skipping update.");
     }
     // --------------------
 
@@ -255,12 +252,10 @@ function draw() {
         }
     }
 
-    // Sync grid speed with leader's forward velocity
-    let forwardSpeed = 15 - leader.vel.z;
-    totalDistance += forwardSpeed;
-
-    grid.update(forwardSpeed);
-    grid.display(gridShake, gridWave); // Pass both params
+    // --- INFINITE GRID ---
+    // Remove grid.update() as it's stateless now
+    // Pass absolute player positions
+    grid.display(leader.pos.x, leader.pos.z, gridShake, gridWave);
 
     // --- MID BOSS SPAWN ---
     // UPDATED: Spawn based on distance (approx 6000 units) instead of score
@@ -427,7 +422,7 @@ function draw() {
     let difficulty = 1.0 + (score * 0.001);
     let spawnInterval = floor(map(constrain(difficulty, 1, 5), 1, 5, 60, 15));
 
-    if (!boss && frameCount % spawnInterval === 0) obstacles.push(new VoxelObstacle(difficulty));
+    if (!boss && frameCount % spawnInterval === 0) obstacles.push(new VoxelObstacle(difficulty, leader.pos));
     for (let i = obstacles.length - 1; i >= 0; i--) {
         obstacles[i].update();
         obstacles[i].display();
@@ -512,10 +507,12 @@ function handleInput() {
     }
 
     if (leader && leader.applyForce) {
-        // --- FIX: FORCE LOCK Y-AXIS ---
+        // Update distance based on velocity
+        totalDistance += leader.vel.mag();
+
+        // Optional: Force lock Y-axis for consistent floor relation
         leader.pos.y = 0;
         leader.vel.y = 0;
-        // ------------------------------
         leader.applyForce(wind);
     }
 

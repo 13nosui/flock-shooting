@@ -1,6 +1,18 @@
 class VoxelObstacle {
-    constructor(difficulty = 1.0) {
-        this.pos = createVector(random(-boundsX, boundsX), random(-boundsY, boundsY), -3000);
+    constructor(difficulty = 1.0, basePos = null) {
+        if (basePos) {
+            // Spawn relative to player: random horizontal offset, fixed distance ahead in Z
+            // Or fully random around player
+            let angle = random(TWO_PI);
+            let distToPlayer = random(3000, 5000);
+            this.pos = createVector(
+                basePos.x + cos(angle) * distToPlayer,
+                random(-boundsY, boundsY),
+                basePos.z + sin(angle) * distToPlayer
+            );
+        } else {
+            this.pos = createVector(random(-boundsX, boundsX), random(-boundsY, boundsY), -3000);
+        }
         this.active = true;
         this.isHit = false;
         this.shakeTimer = 0;
@@ -48,8 +60,15 @@ class VoxelObstacle {
         return 'GROWTH';
     }
     update() {
+        // Obstacles move "forward" or towards the player? 
+        // In the old rail-shooter, they moved pos.z += speed.
+        // Let's keep that but change the deactivation.
         this.pos.z += this.speed;
-        if (this.pos.z > 1000) this.active = false;
+
+        if (leader) {
+            let d = dist(this.pos.x, this.pos.y, this.pos.z, leader.pos.x, leader.pos.y, leader.pos.z);
+            if (d > 6000) this.active = false; // Cull if too far
+        }
 
         // Shooting Logic
         this.fireTimer--;
