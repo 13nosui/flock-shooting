@@ -32,11 +32,13 @@ class MidBoss {
             targetX = leader.pos.x;
         }
 
-        // Approach Z (Smooth fly-in)
-        if (this.pos.z < targetZ) {
-            this.pos.z += 15; // Fly in speed
+        // Smoothly stick to target Z
+        // Use a stronger lerp or direct movement if falling behind
+        if (this.pos.z > targetZ + 500) {
+            this.pos.z -= 20; // Move forward (negative Z) fast if behind
+        } else if (this.pos.z < targetZ - 500) {
+            this.pos.z += 20; // Move back if too far ahead
         } else {
-            // Keep pace if player pushes forward, or hold relative pos
             this.pos.z = lerp(this.pos.z, targetZ, 0.1);
         }
 

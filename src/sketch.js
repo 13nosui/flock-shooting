@@ -261,7 +261,7 @@ function draw() {
     // UPDATED: Spawn based on distance (approx 6000 units) instead of score
     if (!midBoss && !midBossDefeated && totalDistance > 6000) {
         midBoss = new MidBoss(gamePhase);
-        obstacles = []; // Clear normal enemies
+        // obstacles = []; // <-- REMOVED: Let obstacles stay
     }
 
 
