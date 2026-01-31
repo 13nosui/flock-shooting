@@ -60,63 +60,75 @@ class VoxelObstacle {
         return 'GROWTH';
     }
     update() {
-        // Obstacles move "forward" or towards the player? 
-        // In the old rail-shooter, they moved pos.z += speed.
-        // Let's keep that but change the deactivation.
-        this.pos.z += this.speed;
+        // --- UPDATED: Tracking Movement ---
+        if (typeof leader !== 'undefined' && leader) {
+            let targetPos = leader.pos.copy();
+            let dir = p5.Vector.sub(targetPos, this.pos);
 
-        if (leader) {
-            let d = dist(this.pos.x, this.pos.y, this.pos.z, leader.pos.x, leader.pos.y, leader.pos.z);
-            if (d > 6000) this.active = false; // Cull if too far
+            // Normalize and apply speed
+            dir.normalize();
+            dir.mult(this.speed);
+
+            this.pos.add(dir);
+        } else {
+            // Fallback: Move forward if tracking fails
+            this.pos.z += this.speed;
+        }
+
+        // Cleanup if way too far (prevent memory leaks)
+        if (leader && p5.Vector.dist(this.pos, leader.pos) > 5000) {
+            this.active = false;
         }
 
         // Shooting Logic
         this.fireTimer--;
         if (this.fireTimer <= 0 && this.active) {
-            // Fire only if enemy is well ahead of player
-            if (leader && this.pos.z < leader.pos.z - 200) {
+            // Check if leader exists
+            if (leader) {
+                // Calculate distance
+                let distToPlayer = dist(this.pos.x, this.pos.y, this.pos.z, leader.pos.x, leader.pos.y, leader.pos.z);
 
-                let dir = p5.Vector.sub(leader.pos, this.pos);
+                // Only fire if within range (e.g., 2000 units)
+                if (distToPlayer < 2000) {
+                    let dir = p5.Vector.sub(leader.pos, this.pos);
 
-                // Determine Bullet Speed based on Enemy Type
-                let bulletSpeed = 10; // TANK (was 20)
-                if (this.type === 'NORMAL') bulletSpeed = 20; // NORMAL (was 50)
-                if (this.type === 'INTERCEPTOR') bulletSpeed = 30; // INTERCEPTOR (was 40)
+                    // Determine Bullet Speed
+                    let bulletSpeed = 10; // TANK
+                    if (this.type === 'NORMAL') bulletSpeed = 20;
+                    if (this.type === 'INTERCEPTOR') bulletSpeed = 30;
 
-                // Spawn position: Start slightly in front of the enemy to avoid clipping
-                let spawnZ = this.pos.z + (this.size / 2) + 20;
+                    if (this.type === 'TANK') {
+                        // --- TANK: 3-Way Radial Shot ---
+                        let angles = [-0.3, 0, 0.3];
+                        for (let angle of angles) {
+                            // Calculate spread relative to direction
+                            let spreadDir = dir.copy();
+                            let angleY = atan2(spreadDir.x, spreadDir.z) + angle;
+                            let mag = spreadDir.mag();
+                            let finalDir = createVector(sin(angleY) * mag, spreadDir.y, cos(angleY) * mag);
 
-                if (this.type === 'TANK') {
-                    // --- TANK: 3-Way Radial Shot ---
-                    let angles = [-0.3, 0, 0.3];
-                    for (let angle of angles) {
-                        let spreadDir = dir.copy();
-                        let angleY = atan2(spreadDir.x, spreadDir.z) + angle;
-                        let mag = spreadDir.mag();
-                        let finalDir = createVector(sin(angleY) * mag, spreadDir.y, cos(angleY) * mag);
-
-                        finalDir.setMag(bulletSpeed);
+                            finalDir.setMag(bulletSpeed);
+                            if (typeof enemyBullets !== 'undefined') {
+                                enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z, finalDir, 'ENEMY'));
+                            }
+                        }
+                        if (typeof enemyFireSound === 'function') enemyFireSound();
+                    } else {
+                        // --- NORMAL / INTERCEPTOR: Single Shot ---
+                        dir.setMag(bulletSpeed);
                         if (typeof enemyBullets !== 'undefined') {
-                            enemyBullets.push(new Bullet(this.pos.x, this.pos.y, spawnZ, finalDir, 'ENEMY'));
+                            enemyBullets.push(new Bullet(this.pos.x, this.pos.y, this.pos.z, dir, 'ENEMY'));
+                            if (typeof enemyFireSound === 'function') enemyFireSound();
                         }
                     }
-                    if (typeof enemyFireSound === 'function') enemyFireSound();
-                } else {
-                    // --- NORMAL / INTERCEPTOR: Single Shot ---
-                    dir.setMag(bulletSpeed);
-                    if (typeof enemyBullets !== 'undefined') {
-                        enemyBullets.push(new Bullet(this.pos.x, this.pos.y, spawnZ, dir, 'ENEMY'));
-                        if (typeof enemyFireSound === 'function') enemyFireSound();
-                    }
-                }
 
-                // Reset Timer
-                let rate = (this.difficulty || 1);
-                if (this.type === 'TANK') {
-                    this.fireTimer = 180 / rate;
-                } else {
-                    // Shoot faster for fast enemies
-                    this.fireTimer = random(40, 80) / rate;
+                    // Reset Timer
+                    let rate = (this.difficulty || 1);
+                    if (this.type === 'TANK') {
+                        this.fireTimer = 180 / rate;
+                    } else {
+                        this.fireTimer = random(40, 80) / rate;
+                    }
                 }
             }
         }
