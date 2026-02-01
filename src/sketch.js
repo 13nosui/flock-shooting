@@ -433,9 +433,10 @@ function draw() {
     }
     // -------------------------------
 
-    // Difficulty Ramp Logic
-    let difficulty = 1.0 + (score * 0.001);
-    let spawnInterval = floor(map(constrain(difficulty, 1, 5), 1, 5, 60, 15));
+    // Difficulty Ramp Logic (Easier)
+    let difficulty = 1.0 + (score * 0.0005); // Slower scaling
+    // Spawn less frequently (was 60, 15)
+    let spawnInterval = floor(map(constrain(difficulty, 1, 5), 1, 5, 100, 40));
 
     if (!boss && frameCount % spawnInterval === 0) obstacles.push(new VoxelObstacle(difficulty));
     for (let i = obstacles.length - 1; i >= 0; i--) {

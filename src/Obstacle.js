@@ -28,23 +28,28 @@ class VoxelObstacle {
             this.type = 'TANK';
             this.size = random(400, 600);
             this.speed = 0; // Stationary
-            this.maxHp = floor(15 + (difficulty - 1) * 15);
+            // NERF: Lower HP (was 15 base)
+            this.maxHp = floor(10 + (difficulty - 1) * 10);
             this.color = color(100, 50, 150);
-            this.fireTimer = random(100, 150) / difficulty;
+            // NERF: Slower fire (was 100, 150)
+            this.fireTimer = random(180, 250) / difficulty;
         } else if (r < 0.3) {
             this.type = 'INTERCEPTOR';
             this.size = random(80, 120);
             this.speed = 0; // Stationary
             this.maxHp = 1;
             this.color = color(255, 255, 100);
-            this.fireTimer = random(20, 50) / difficulty;
+            // NERF: Slower fire (was 20, 50)
+            this.fireTimer = random(60, 100) / difficulty;
         } else {
             this.type = 'NORMAL';
             this.size = random(180, 350);
             this.speed = 0; // Stationary
-            this.maxHp = floor(3 + (difficulty - 1) * 5);
+            // NERF: Lower HP (was 3 base)
+            this.maxHp = floor(2 + (difficulty - 1) * 3);
             this.color = null;
-            this.fireTimer = random(50, 90) / difficulty;
+            // NERF: Slower fire (was 50, 90)
+            this.fireTimer = random(100, 150) / difficulty;
         }
 
         this.hp = this.maxHp;
@@ -81,10 +86,10 @@ class VoxelObstacle {
                 if (distToPlayer < 3000) {
                     let dir = p5.Vector.sub(leader.pos, this.pos);
 
-                    // Determine Bullet Speed
-                    let bulletSpeed = 10;
-                    if (this.type === 'NORMAL') bulletSpeed = 20;
-                    if (this.type === 'INTERCEPTOR') bulletSpeed = 30;
+                    // NERF: Slower Bullets
+                    let bulletSpeed = 5; // TANK (was 10)
+                    if (this.type === 'NORMAL') bulletSpeed = 10; // (was 20)
+                    if (this.type === 'INTERCEPTOR') bulletSpeed = 15; // (was 30)
 
                     let spawnZ = this.pos.z + (this.size / 2) + 20;
 
@@ -112,10 +117,10 @@ class VoxelObstacle {
                         }
                     }
 
-                    // Reset Timer
+                    // Reset Timer (NERF: Slower reset)
                     let rate = (this.difficulty || 1);
-                    if (this.type === 'TANK') this.fireTimer = 180 / rate;
-                    else this.fireTimer = random(40, 80) / rate;
+                    if (this.type === 'TANK') this.fireTimer = 250 / rate;
+                    else this.fireTimer = random(120, 180) / rate;
                 }
             }
         }
