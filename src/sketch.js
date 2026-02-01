@@ -409,6 +409,8 @@ function draw() {
 
             if (items[i].type === 'GROWTH') {
                 growFlock(2);
+            } else if (items[i].type === 'SHIELD') { // --- NEW ---
+                shieldHp = 3; // Restore shield
             } else {
                 weaponMode = items[i].type;
                 weaponTimer = 600; // 10 seconds
@@ -418,6 +420,18 @@ function draw() {
             items.splice(i, 1);
         }
     }
+
+    // --- NEW: Draw Active Shield ---
+    if (shieldHp > 0 && leader) {
+        push();
+        translate(leader.pos.x, leader.pos.y, leader.pos.z);
+        noFill();
+        stroke(0, 255, 255, 100 + sin(frameCount * 0.2) * 100); // Pulsing Blue
+        strokeWeight(2);
+        sphere(50); // Shield bubble
+        pop();
+    }
+    // -------------------------------
 
     // Difficulty Ramp Logic
     let difficulty = 1.0 + (score * 0.001);
@@ -821,7 +835,7 @@ function resetGame() {
     bossSpawnDelay = 0;
     totalDistance = 0;
     gamePhase = 1;
-
+    shieldHp = 0;
 
     if (midBossBgmOsc) midBossBgmOsc.amp(0);
     setup();
