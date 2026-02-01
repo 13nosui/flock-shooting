@@ -259,8 +259,8 @@ function draw() {
     grid.display(leader.pos.x, leader.pos.z, gridShake, gridWave);
 
     // --- MID BOSS SPAWN ---
-    // UPDATED: Spawn based on distance (approx 6000 units) instead of score
-    if (!midBoss && !midBossDefeated && totalDistance > 6000) {
+    // UPDATED: Delayed spawn (approx 15000 units) to let player gear up
+    if (!midBoss && !midBossDefeated && totalDistance > 15000) {
         midBoss = new MidBoss(gamePhase);
         // obstacles = []; // <-- REMOVED: Let obstacles stay
     }
