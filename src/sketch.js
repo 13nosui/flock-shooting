@@ -180,13 +180,15 @@ function draw() {
     shakeMagnitude *= shakeDecay;
     if (shakeMagnitude < 0.1) shakeMagnitude = 0;
 
-    // --- NEW: Banking Logic ---
+    // --- NEW: Banking Logic (Adjusted for comfort) ---
     // Roll: Tilt based on X velocity (Left = Bank Left)
-    let targetRoll = (leader.vel.x * 0.05);
+    // REDUCED: 0.05 -> 0.02
+    let targetRoll = (leader.vel.x * 0.02);
     camRoll = lerp(camRoll, targetRoll, 0.1);
 
     // Pitch: Tilt based on Z velocity (Forward = Nose Down effect)
-    let targetPitch = (leader.vel.z * 0.05);
+    // REDUCED: 0.05 -> 0.01
+    let targetPitch = (leader.vel.z * 0.01);
     camPitch = lerp(camPitch, targetPitch, 0.1);
 
     // Calculate Camera Up Vector for Roll
@@ -195,7 +197,8 @@ function draw() {
     let upZ = 0;
 
     // Calculate Look At Offset for Pitch
-    let pitchOffset = sin(camPitch) * 500;
+    // REDUCED: 500 -> 150
+    let pitchOffset = sin(camPitch) * 150;
 
     // Final Coordinates
     let finalCamX = curCamX + shakeX;
