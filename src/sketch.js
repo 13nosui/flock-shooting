@@ -50,7 +50,10 @@ let floatingTexts = [];
 let shakeMagnitude = 0;
 let shakeDecay = 0.9;
 let glitchIntensity = 0;
-let shieldHp = 0; // --- NEW ---
+let shieldHp = 0;
+let camRoll = 0;
+let camPitch = 0;
+// --- NEW ---
 
 function preload() {
     myFont = loadFont('assets/RobotoMono-VariableFont_wght.ttf');
@@ -165,7 +168,7 @@ function draw() {
     }
 
     push();
-    // --- CAMERA FOLLOW LOGIC ---
+    // --- DYNAMIC CAMERA ---
     // Smoothly follow player X and Z
     curCamX = lerp(curCamX, leader.pos.x, 0.1);
     let targetCamZ = leader.pos.z + 800; // Keep fixed distance behind
@@ -177,18 +180,39 @@ function draw() {
     shakeMagnitude *= shakeDecay;
     if (shakeMagnitude < 0.1) shakeMagnitude = 0;
 
+    // --- NEW: Banking Logic ---
+    // Roll: Tilt based on X velocity (Left = Bank Left)
+    let targetRoll = (leader.vel.x * 0.05);
+    camRoll = lerp(camRoll, targetRoll, 0.1);
+
+    // Pitch: Tilt based on Z velocity (Forward = Nose Down effect)
+    let targetPitch = (leader.vel.z * 0.05);
+    camPitch = lerp(camPitch, targetPitch, 0.1);
+
+    // Calculate Camera Up Vector for Roll
+    let upX = sin(camRoll);
+    let upY = cos(camRoll);
+    let upZ = 0;
+
+    // Calculate Look At Offset for Pitch
+    let pitchOffset = sin(camPitch) * 500;
+
+    // Final Coordinates
     let finalCamX = curCamX + shakeX;
-    let finalCamY = -1200 + shakeY;
+    let finalCamY = -1200 + shakeY; // High angle
     let finalCamZ = targetCamZ + shakeZ;
 
-    // Look at player
     let lookX = leader.pos.x;
-    let lookY = 0;
-    let lookZ = leader.pos.z - 200; // Look slightly ahead
+    let lookY = 0 + pitchOffset; // Apply Pitch
+    let lookZ = leader.pos.z - 500; // Look ahead
 
-    // Apply Camera
+    // Apply Camera with new Up Vector
     if (!isNaN(finalCamX) && !isNaN(finalCamY) && !isNaN(finalCamZ)) {
-        camera(finalCamX, finalCamY, finalCamZ, lookX, lookY, lookZ, 0, 1, 0);
+        camera(
+            finalCamX, finalCamY, finalCamZ, // Position
+            lookX, lookY, lookZ,             // Target
+            upX, upY, upZ                    // Up Vector (Roll)
+        );
     }
     // --------------------
 
