@@ -4,6 +4,7 @@ class Bullet {
         this.vel = vel;
         this.mode = mode;
         this.active = true;
+        this.timer = 0;
         this.penetrate = (mode === 'LASER');
 
         // Homing properties
@@ -33,10 +34,19 @@ class Bullet {
         }
 
         this.pos.add(this.vel);
+        this.timer++;
 
-        if (this.pos.z < -4000 || this.pos.z > 1000) {
+        // --- FIX: Despawn Logic ---
+        // Removed absolute coordinate checks to support infinite world.
+        // Only remove bullet after a certain time (Lifespan).
+
+        let lifeSpan = 200; // ~3.3 seconds
+        if (this.mode === 'LASER') lifeSpan = 100; // Laser is faster, shorter life
+
+        if (this.timer > lifeSpan) {
             this.active = false;
         }
+        // --------------------------
     }
 
     homingLogic() {
