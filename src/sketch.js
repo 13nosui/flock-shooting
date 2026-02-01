@@ -50,6 +50,7 @@ let floatingTexts = [];
 let shakeMagnitude = 0;
 let shakeDecay = 0.9;
 let glitchIntensity = 0;
+let shieldHp = 0; // --- NEW ---
 
 function preload() {
     myFont = loadFont('assets/RobotoMono-VariableFont_wght.ttf');
@@ -600,6 +601,11 @@ function drawUI() {
         text("WEAPON: " + weaponMode + " (" + ceil(weaponTimer / 60) + "s)", -width * 0.45, -height * 0.45 + 60);
     }
 
+    if (shieldHp > 0) {
+        fill(0, 200, 255);
+        text("SHIELD: " + shieldHp, -width * 0.45, -height * 0.45 + 90);
+    }
+
 
     // Dashboard Stats (Top Right)
     textAlign(RIGHT, TOP);
@@ -762,6 +768,14 @@ function keyPressed() {
 }
 
 function damageFlock(amount) {
+    // --- NEW: Shield Protection ---
+    if (shieldHp > 0) {
+        shieldHp--;
+        triggerHitEffect(); // Visual feedback
+        return; // Prevent damage
+    }
+    // ------------------------------
+
     triggerHitEffect();
     addScreenShake(30);
     for (let i = 0; i < amount; i++) {

@@ -53,11 +53,13 @@ class VoxelObstacle {
     getDropItemType() {
         if (this.type === 'TANK') {
             let r = random();
-            if (r < 0.4) return 'LASER';
-            if (r < 0.8) return 'HOMING';
+            if (r < 0.3) return 'LASER';
+            if (r < 0.6) return 'HOMING';
+            if (r < 0.8) return 'SHIELD';
             return 'GROWTH';
         }
-        if (random() < 0.05) return random(['LASER', 'HOMING']);
+        let r = random();
+        if (r < 0.05) return random(['LASER', 'HOMING', 'SHIELD']);
         return 'GROWTH';
     }
 
